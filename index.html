@@ -340,6 +340,81 @@ body.no-motion .reveal { opacity: 1 !important; transform: none !important; tran
 }
 body.no-motion :is(.sum-card, .chart-card, .upload-card, .month-pill, .analyze-btn):hover { transform: none; }
 
+/* ── Dining entry card ── */
+.dining-entry {
+  width: 100%; text-align: left; background: var(--surface); border: var(--card-border);
+  border-radius: var(--radius); box-shadow: var(--card-shadow); padding: 20px 26px;
+  margin-bottom: 24px; cursor: pointer; display: flex; align-items: center; gap: 18px;
+  font-family: var(--font-body); color: var(--ink);
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+}
+.dining-entry:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); }
+.de-icon { width: 46px; height: 46px; border-radius: 12px; background: var(--surface); border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 3px 3px 0 var(--yellow); }
+.de-body { flex: 1; min-width: 0; display: block; }
+.de-title { font-size: 14px; font-weight: 700; letter-spacing: .06em; display: flex; align-items: center; gap: 9px; }
+.de-title::before { content: ''; width: 9px; height: 9px; background: var(--yellow); flex-shrink: 0; }
+.de-sub { display: block; font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+.de-stats { display: flex; gap: 28px; }
+.de-stat { display: block; text-align: right; }
+.de-stat .num { display: block; font-family: var(--font-en); font-weight: 800; font-size: 19px; }
+.de-stat .lbl { display: block; font-size: 11px; color: var(--ink-3); letter-spacing: .1em; margin-top: 2px; }
+.de-arrow { width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform .25s cubic-bezier(.34,1.56,.64,1); }
+.dining-entry:hover .de-arrow { transform: translateX(4px); }
+
+/* ── Meal modal ── */
+.meal-overlay { position: fixed; inset: 0; background: rgba(31,33,37,.5); z-index: 1000; display: none; align-items: flex-start; justify-content: center; padding: 4vh 16px; }
+.meal-overlay.open { display: flex; }
+.meal-modal { background: var(--bg); border-radius: 18px; width: 100%; max-width: 800px; max-height: 92vh; overflow-y: auto; box-shadow: 0 24px 64px rgba(31,33,37,.3); animation: modalIn .3s var(--ease); }
+@keyframes modalIn { from { opacity: 0; transform: translateY(24px) scale(.98); } to { opacity: 1; transform: none; } }
+body.no-motion .meal-modal { animation: none; }
+.mm-head { position: sticky; top: 0; z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; border-radius: 18px 18px 0 0; }
+.mm-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.mm-en { font-family: var(--font-en); font-weight: 800; font-size: 16px; letter-spacing: .18em; }
+.mm-zh { font-size: 12px; color: var(--ink-3); letter-spacing: .15em; }
+.mm-scope { font-size: 11px; color: var(--ink-3); }
+.mm-close { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--surface); cursor: pointer; font-size: 15px; line-height: 1; color: var(--ink); flex-shrink: 0; transition: background .15s var(--ease), color .15s var(--ease); }
+.mm-close:hover { background: var(--ink); color: #fff; }
+.mm-body { padding: 22px 28px 30px; display: flex; flex-direction: column; gap: 18px; }
+.mm-card { background: var(--surface); border: var(--card-border); border-radius: var(--radius); padding: 20px 24px; box-shadow: var(--card-shadow); }
+.mm-card h4 { font-size: 13px; font-weight: 700; letter-spacing: .08em; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.mm-card h4::before { content: ''; width: 8px; height: 8px; background: var(--yellow); flex-shrink: 0; }
+.vs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.vs-box { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 16px; }
+.vs-box.lead { border-color: var(--yellow); background: var(--yellow-tint); }
+.vs-box .t { font-size: 12px; font-weight: 700; color: var(--ink-2); }
+.vs-box .v { font-family: var(--font-en); font-size: 22px; font-weight: 800; margin-top: 4px; }
+.vs-box .m { font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+.ratio-track { height: 10px; border-radius: 5px; background: var(--line-soft); overflow: hidden; display: flex; }
+.ratio-out { background: var(--yellow); height: 100%; }
+.ratio-cook { background: var(--ink); opacity: .75; height: 100%; }
+.ratio-legend { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); margin-top: 6px; }
+.meal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.meal-box { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 16px; }
+.mb-name { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--ink-2); display: flex; justify-content: space-between; }
+.mb-avg { font-family: var(--font-en); font-size: 21px; font-weight: 800; margin-top: 6px; }
+.mb-avg.over { color: #D0342C; }
+.mb-meta { font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+.mb-track { height: 6px; border-radius: 3px; background: var(--line-soft); margin-top: 10px; overflow: hidden; }
+.mb-fill { height: 100%; border-radius: 3px; background: var(--yellow); }
+.mb-fill.over { background: #D0342C; }
+.mb-budget { font-size: 11px; color: var(--ink-3); margin-top: 5px; display: flex; justify-content: space-between; }
+.mb-budget .ok { color: #2E7D32; font-weight: 600; }
+.mb-budget .bad { color: #D0342C; font-weight: 600; }
+.thresh-row { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--ink-2); margin-bottom: 14px; }
+.thresh-row input[type=range] { flex: 1; accent-color: var(--yellow-deep); }
+.thresh-val { font-family: var(--font-en); font-weight: 800; min-width: 70px; text-align: right; }
+.mm-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.mm-table th { font-size: 10.5px; padding: 7px 10px; }
+.mm-table td { padding: 8px 10px; }
+.snack-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 12px; }
+.review-line { font-size: 12.5px; color: var(--ink-2); line-height: 1.7; padding: 9px 14px; background: var(--yellow-tint); border-left: 3px solid var(--yellow); margin-top: 8px; }
+.mm-note { font-size: 11px; color: var(--ink-3); margin-top: 10px; line-height: 1.6; }
+@media (max-width: 700px) {
+  .meal-grid, .snack-grid, .vs-row { grid-template-columns: 1fr; }
+  .de-stats { display: none; }
+  .mm-body { padding: 16px; }
+}
+
 /* ── Responsive ── */
 @media (max-width: 860px) {
   .summary-row { grid-template-columns: 1fr 1fr; }
@@ -371,7 +446,7 @@ body.no-motion :is(.sum-card, .chart-card, .upload-card, .month-pill, .analyze-b
   </header>
   <div class="hero reveal">
     <h1 class="hero-title">EXPENSE<br><em>ANALYTICS</em></h1>
-    <p class="hero-sub"><span class="hero-bar"></span>上傳帳單，掌握每一筆花費的去向</p>
+    <p class="hero-sub"><span class="hero-bar"></span><span id="hero-tagline">上傳帳單，掌握每一筆花費的去向</span></p>
   </div>
 </div>
 
@@ -438,6 +513,24 @@ body.no-motion :is(.sum-card, .chart-card, .upload-card, .month-pill, .analyze-b
       <div class="sum-card reveal" style="--rev:3"><div class="label">平均每日消費</div><div class="amount" id="sum-avg">-</div><div class="meta" id="meta-avg"></div></div>
     </div>
 
+    <!-- Dining analysis entry -->
+    <button class="dining-entry reveal" id="dining-entry" onclick="openMealModal()">
+      <span class="de-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v5a2 2 0 0 0 4 0V3"></path><path d="M9 3v18"></path><path d="M17 3c-1.7 0-3 2.2-3 5s1.3 4 3 4 3-1.2 3-4-1.3-5-3-5z"></path><path d="M17 12v9"></path></svg>
+      </span>
+      <span class="de-body">
+        <span class="de-title">用餐深度分析</span>
+        <span class="de-sub">外食自煮 · 餐別預算 · 特殊聚餐 · 點心手搖檢討</span>
+      </span>
+      <span class="de-stats">
+        <span class="de-stat"><span class="num" id="de-count">-</span><span class="lbl">外食次數</span></span>
+        <span class="de-stat"><span class="num" id="de-total">-</span><span class="lbl">外食金額</span></span>
+      </span>
+      <span class="de-arrow" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"></path><path d="M13 6l6 6-6 6"></path></svg>
+      </span>
+    </button>
+
     <!-- Charts -->
     <div class="charts-row">
       <div class="chart-card reveal"><h3 id="personal-chart-title">個人消費分類</h3><div class="chart-wrap"><canvas id="chart-personal"></canvas></div></div>
@@ -500,6 +593,17 @@ body.no-motion :is(.sum-card, .chart-card, .upload-card, .month-pill, .analyze-b
     <button class="demo-link" onclick="loadDemo()">或載入範例資料先看看效果 →</button>
   </div>
 
+</div>
+
+<!-- Meal analysis modal -->
+<div class="meal-overlay" id="meal-overlay">
+  <div class="meal-modal" role="dialog" aria-modal="true" aria-label="用餐深度分析">
+    <div class="mm-head">
+      <div class="mm-title"><span class="mm-en">DINING</span><span class="mm-zh">用餐深度分析</span><span class="mm-scope" id="mm-scope"></span></div>
+      <button class="mm-close" onclick="closeMealModal()" aria-label="關閉">✕</button>
+    </div>
+    <div class="mm-body" id="mm-body"></div>
+  </div>
 </div>
 
 <script>
@@ -614,7 +718,7 @@ function buildAllRows() {
         const key = `${personName} (欠款)`;
         if (r[key] !== undefined) amount = parseAmount(r[key]);
       }
-      allRows.push({ date: d, dateFmt: `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`, name: r['名稱'], cat: normCat(r['類別']), type, amount, totalAmt, memo: r['備忘錄'] || '' });
+      allRows.push({ date: d, dateFmt: `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`, name: r['名稱'], cat: normCat(r['類別']), type, amount, totalAmt, memo: r['備忘錄'] || '', time: r['時間'] || '' });
     });
   }
   add(personalRaw, 'personal');
@@ -697,6 +801,9 @@ function renderDashboard(rows) {
   chartShared   = drawPie('chart-shared',   catBreakdown(shared),   chartShared);
   buildCatTable(rows, catTabMode);
   availableCats = [...new Set(rows.map(r => r.cat))].sort();
+  const eatOutRows = rows.filter(r => r.cat === '用餐');
+  document.getElementById('de-count').textContent = eatOutRows.length;
+  document.getElementById('de-total').textContent = fmt(eatOutRows.reduce((t, r) => t + r.amount, 0));
 }
 
 // ── Charts ─────────────────────────────────────────────
@@ -1023,6 +1130,211 @@ requestAnimationFrame(setupReveals);
   });
   masthead.addEventListener('mouseleave', () => { mouse = null; kick(); });
 })();
+
+// ── 用餐深度分析 modal ─────────────────────────────────
+const DINING_BUDGET = 19000; // 每月總飲食預算
+const MEAL_BUDGETS = { '早餐': 100, '午餐': 200, '晚餐': 200 };
+const MEAL_ORDER = ['早餐', '午餐', '晚餐'];
+let gatherThreshold = 500;
+
+const SNACK_GROUPS = [
+  { name: '點心甜點', kw: ['點心','甜點','冰淇淋','蛋糕','鬆餅','甜湯','豆花','麵包'] },
+  { name: '手搖咖啡', kw: ['飲料','手搖','咖啡','珍奶','奶茶','茶飲','星巴克','路易莎','50嵐','清心','可不可','麻古','雪碧','可樂','果汁'] },
+  { name: '酒吧小酌', kw: ['酒','bar'] }
+];
+
+function sumAmt(rows) { return rows.reduce((t, r) => t + r.amount, 0); }
+
+function mealTypeOf(r) {
+  const n = r.name || '';
+  if (n.includes('早餐')) return '早餐';
+  if (n.includes('午餐')) return '午餐';
+  if (n.includes('晚餐') || n.includes('宵夜')) return '晚餐';
+  const m = (r.time || '').match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return '晚餐';
+  const mins = (+m[1]) * 60 + (+m[2]);
+  if (mins >= 300 && mins < 630) return '早餐';
+  if (mins >= 630 && mins < 960) return '午餐';
+  return '晚餐';
+}
+
+const SNACK_EXCLUDE = ['濾紙', '咖啡機', '咖啡杯'];
+function snackGroupOf(r) {
+  if (r.cat === '點心') return SNACK_GROUPS[0];
+  if (r.cat === '飲料') return SNACK_GROUPS[1];
+  const txt = ((r.name || '') + ' ' + (r.memo || '')).toLowerCase();
+  if (SNACK_EXCLUDE.some(k => txt.includes(k))) return null;
+  for (const g of SNACK_GROUPS) if (g.kw.some(k => txt.includes(k.toLowerCase()))) return g;
+  return null;
+}
+
+function periodDays() {
+  const ds = baseRows.map(r => r.date).filter(d => !isNaN(d));
+  if (!ds.length) return 30;
+  return Math.max(1, Math.round((Math.max(...ds) - Math.min(...ds)) / 86400000) + 1);
+}
+function prevMonthKey(mk) {
+  let [y, m] = mk.split('/').map(Number); m--;
+  if (!m) { m = 12; y--; }
+  return `${y}/${String(m).padStart(2, '0')}`;
+}
+
+function mealStats() {
+  const eatOut = baseRows.filter(r => r.cat === '用餐');
+  const grocery = baseRows.filter(r => r.cat === '雜貨');
+  const gatherings = eatOut.filter(r => r.amount > gatherThreshold);
+  const daily = eatOut.filter(r => r.amount <= gatherThreshold);
+  const meals = { '早餐': [], '午餐': [], '晚餐': [] };
+  daily.forEach(r => meals[mealTypeOf(r)].push(r));
+  const snacks = SNACK_GROUPS.map(g => ({ name: g.name, rows: [] }));
+  baseRows.forEach(r => {
+    const g = snackGroupOf(r);
+    if (g) snacks.find(x => x.name === g.name).rows.push(r);
+  });
+  return { eatOut, grocery, gatherings, meals, snacks };
+}
+
+function snackReviewLine(name, rows) {
+  const n = rows.length;
+  let line = `${name}：本期 ${n} 次`;
+  if (n) {
+    const d = periodDays();
+    if (d >= 7 && n > 1) line += `，約每 ${Math.round(d / n)} 天 1 次`;
+  }
+  if (selectedMonth !== 'all') {
+    const pk = prevMonthKey(selectedMonth);
+    const prevN = allRows.filter(r => !isNaN(r.date) && monthKey(r.date) === pk && (snackGroupOf(r) || {}).name === name).length;
+    const diff = n - prevN;
+    line += diff > 0 ? `，比上月多 ${diff} 次` : diff < 0 ? `，比上月少 ${-diff} 次` : '，與上月持平';
+  }
+  if (n === 0) line += '，這期完全沒有，漂亮';
+  else if (n >= 8) line += '，頻率偏高，可以注意一下';
+  return line;
+}
+
+function renderMealModal() {
+  const { eatOut, grocery, gatherings, meals, snacks } = mealStats();
+  const fixedOn = document.getElementById('toggle-fixed').checked;
+  document.getElementById('mm-scope').textContent =
+    (selectedMonth === 'all' ? '全部期間' : monthLabel(selectedMonth)) + (fixedOn ? ' · 已排除固定支出' : '');
+
+  const eoT = sumAmt(eatOut), grT = sumAmt(grocery), tot = (eoT + grT) || 1;
+  const eoPct = Math.round(eoT / tot * 100);
+
+  // 總飲食 = 外食 + 自煮 + 點心/飲料類別
+  const extraFood = baseRows.filter(r => r.cat === '點心' || r.cat === '飲料');
+  const foodTotal = eoT + grT + sumAmt(extraFood);
+  const monthsInView = selectedMonth === 'all'
+    ? Math.max(1, new Set(baseRows.filter(r => !isNaN(r.date)).map(r => monthKey(r.date))).size)
+    : 1;
+  const foodCompare = foodTotal / monthsInView;
+  const fbPct = Math.min(foodCompare / DINING_BUDGET * 100, 130);
+  const fbOver = foodCompare > DINING_BUDGET;
+  const fbDiff = Math.round(Math.abs(DINING_BUDGET - foodCompare));
+  const fbLabel = selectedMonth === 'all' ? '平均每月飲食' : '本月飲食合計';
+
+  let html = `<div class="mm-card"><h4>總飲食預算</h4>
+    <div class="vs-row">
+      <div class="vs-box${fbOver ? '' : ' lead'}"><div class="t">${fbLabel}</div><div class="v${fbOver ? '' : ''}" style="${fbOver ? 'color:#D0342C' : ''}">${fmt(foodCompare)}</div><div class="m">外食＋自煮＋點心飲料${selectedMonth === 'all' ? ` · 共 ${monthsInView} 個月` : ''}</div></div>
+      <div class="vs-box"><div class="t">每月預算</div><div class="v">${fmt(DINING_BUDGET)}</div><div class="m">${fbOver ? `超出 ${fmt(fbDiff)}` : `還剩 ${fmt(fbDiff)}`} · 已用 ${Math.round(foodCompare / DINING_BUDGET * 100)}%</div></div>
+    </div>
+    <div class="mb-track" style="height:10px;border-radius:5px"><div class="mb-fill${fbOver ? ' over' : ''}" style="width:${fbPct}%"></div></div>
+    <div class="mb-budget" style="margin-top:6px"><span>0</span><span class="${fbOver ? 'bad' : 'ok'}">${fbOver ? '預算超標' : '預算內'}</span><span>${fmt(DINING_BUDGET)}</span></div>
+  </div>`;
+
+  html += `<div class="mm-card"><h4>外食 vs 自煮</h4>
+    <div class="vs-row">
+      <div class="vs-box${eoT >= grT ? ' lead' : ''}"><div class="t">外食</div><div class="v">${fmt(eoT)}</div><div class="m">${eatOut.length} 筆 · 占 ${eoPct}%</div></div>
+      <div class="vs-box${grT > eoT ? ' lead' : ''}"><div class="t">自煮（雜貨採買）</div><div class="v">${fmt(grT)}</div><div class="m">${grocery.length} 筆 · 占 ${100 - eoPct}%</div></div>
+    </div>
+    <div class="ratio-track"><span class="ratio-out" style="width:${eoPct}%"></span><span class="ratio-cook" style="width:${100 - eoPct}%"></span></div>
+    <div class="ratio-legend"><span>外食 ${eoPct}%</span><span>自煮 ${100 - eoPct}%</span></div>
+    <div class="mm-note">自煮以「雜貨」類別全額估計，可能含非食材品項。</div>
+  </div>`;
+
+  html += `<div class="mm-card"><h4>早午晚餐 vs 預算</h4><div class="meal-grid">`;
+  MEAL_ORDER.forEach(mt => {
+    const rows = meals[mt], n = rows.length;
+    const avg = n ? sumAmt(rows) / n : 0;
+    const budget = MEAL_BUDGETS[mt], over = avg > budget;
+    const pct = n ? Math.min(avg / budget * 100, 130) : 0;
+    html += `<div class="meal-box">
+      <div class="mb-name"><span>${mt}</span><span>${n} 次</span></div>
+      <div class="mb-avg${over ? ' over' : ''}">${n ? fmt(avg) : '—'}</div>
+      <div class="mb-meta">平均每餐 · 合計 ${fmt(sumAmt(rows))}</div>
+      <div class="mb-track"><div class="mb-fill${over ? ' over' : ''}" style="width:${pct}%"></div></div>
+      <div class="mb-budget"><span>預算 ${budget}</span>${n ? `<span class="${over ? 'bad' : 'ok'}">${over ? '超出 ' + Math.round(avg - budget) : '低於預算'}</span>` : '<span>—</span>'}</div>
+    </div>`;
+  });
+  html += `</div><div class="mm-note">已排除 ${gatherings.length} 筆特殊聚餐避免拉高平均。名稱含早／午／晚餐優先判定，其餘依記帳時間推斷（05:00–10:30 早、10:30–16:00 午、其餘歸晚）。</div></div>`;
+
+  const gT = sumAmt(gatherings);
+  html += `<div class="mm-card"><h4>特殊聚餐</h4>
+    <div class="thresh-row"><span style="white-space:nowrap">門檻：單筆分攤超過</span>
+      <input type="range" min="200" max="1500" step="50" value="${gatherThreshold}"
+        oninput="document.getElementById('thresh-val').textContent='NT$ '+(+this.value).toLocaleString()"
+        onchange="setGatherThreshold(this.value)">
+      <span class="thresh-val" id="thresh-val">NT$ ${gatherThreshold.toLocaleString()}</span></div>`;
+  if (gatherings.length) {
+    html += `<div class="mm-note" style="margin:0 0 10px">${gatherings.length} 次 · 合計 ${fmt(gT)} · 平均每次 ${fmt(gT / gatherings.length)}</div>
+    <table class="mm-table"><thead><tr><th>日期</th><th>名稱</th><th>備忘錄</th><th style="text-align:right">分攤金額</th></tr></thead><tbody>`;
+    gatherings.forEach(r => {
+      html += `<tr><td class="cell-date">${r.dateFmt}</td><td class="cell-name">${r.name}</td><td class="cell-memo">${r.memo}</td><td style="text-align:right" class="amount-cell">${fmt(r.amount)}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    html += `<div class="cell-empty" style="padding:14px 0 4px">本期沒有超過門檻的聚餐</div>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="mm-card"><h4>點心 · 手搖 · 小酌</h4><div class="snack-grid">`;
+  snacks.forEach(g => {
+    const n = g.rows.length;
+    html += `<div class="meal-box">
+      <div class="mb-name"><span>${g.name}</span><span>${n} 次</span></div>
+      <div class="mb-avg">${n ? fmt(sumAmt(g.rows)) : '—'}</div>
+      <div class="mb-meta">${n ? '平均單次 ' + fmt(sumAmt(g.rows) / n) : '本期沒有紀錄'}</div>
+    </div>`;
+  });
+  html += `</div>`;
+  snacks.forEach(g => { html += `<div class="review-line">${snackReviewLine(g.name, g.rows)}</div>`; });
+  html += `</div>`;
+
+  document.getElementById('mm-body').innerHTML = html;
+}
+
+function setGatherThreshold(v) { gatherThreshold = +v; renderMealModal(); }
+function openMealModal() {
+  renderMealModal();
+  document.getElementById('meal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeMealModal() {
+  document.getElementById('meal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('meal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeMealModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMealModal(); });
+
+// ── Random hero tagline ────────────────────────────────
+const TAGLINES = [
+  '十分滿分中的十分',
+  '超出預算的不是我，是物價',
+  '甜點是另一個胃，預算是另一個錢包',
+  '咖啡不是消費，是生產力投資',
+  '數字不會騙人，但會嚇人',
+  '打開之前，先深呼吸',
+  '上個月的我，對不起這個月的我',
+  '都是必要支出，真的',
+  '這些都是經過深思熟慮的消費',
+  '共同支出，共同面對',
+  '先買貴的，才不會買兩次',
+  '現在不買，之後更貴',
+  '買錯也是一種學習'
+];
+document.getElementById('hero-tagline').textContent = TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
 
 // ── Init ───────────────────────────────────────────────
 setupFileInput('file-shared',   'card-shared',   'name-shared',   'status-shared',   'shared');
