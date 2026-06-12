@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>消費分析 — Expense Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ============================================================
+   消費分析 — YooDesign-inspired restyle
+   Yellow #F9B414 / Ink #1F2125 / light-gray gallery surfaces
+   Type: Montserrat (EN caps display) + Noto Sans TC (body)
+   Themes: [data-theme="gallery" | "ink" | "outline"] on <body>
+   ============================================================ */
+
+:root {
+  --yellow: #F9B414;
+  --yellow-deep: #E0A006;
+  --yellow-soft: #FBF1D3;
+  --yellow-tint: #FCF7E6;
+  --ink: #1F2125;
+  --ink-2: #5B6066;
+  --ink-3: #9AA0A8;
+  --bg: #F0F0F1;
+  --surface: #ffffff;
+  --line: #E3E4E6;
+  --line-soft: #EFF0F1;
+  --acc-bg: var(--yellow);
+  --acc-fg: var(--ink);
+  --badge-shared-bg: var(--yellow-soft);
+  --badge-shared-fg: #8A6A12;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --card-border: 1px solid var(--line);
+  --card-shadow: 0 1px 2px rgba(31, 33, 37, .04);
+  --card-shadow-hover: 0 12px 28px rgba(31, 33, 37, .09);
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --font-en: 'Montserrat', 'Noto Sans TC', sans-serif;
+  --font-body: 'Noto Sans TC', 'Montserrat', 'PingFang TC', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+::selection { background: var(--yellow); color: var(--ink); }
+button { font-family: var(--font-body); }
+:is(button, .month-pill, .cat-tab):focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+
+.container { max-width: 1180px; margin: 0 auto; padding: 0 28px 64px; }
+
+/* ── Masthead: top bar + hero ── */
+.masthead { border-bottom: 1px solid var(--line); margin-bottom: 44px; position: relative; overflow: hidden; }
+.masthead .topbar, .masthead .hero { position: relative; z-index: 1; }
+.hero-deco {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: min(54vw, 680px); pointer-events: none; z-index: 0;
+}
+.hero-deco svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.deco-shape { transform-box: fill-box; transform-origin: center; will-change: transform; }
+.topbar {
+  max-width: 1180px; margin: 0 auto; padding: 22px 28px 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand-dot {
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--yellow); border: 2px solid var(--ink);
+  align-self: center; flex-shrink: 0;
+}
+.brand-en { font-family: var(--font-en); font-weight: 800; font-size: 15px; letter-spacing: .18em; }
+.brand-zh { font-size: 12px; color: var(--ink-3); letter-spacing: .25em; }
+.hero { max-width: 1180px; margin: 0 auto; padding: 52px 28px 56px; }
+.hero-title {
+  font-family: var(--font-en); font-weight: 900; text-transform: uppercase;
+  font-size: clamp(42px, 6vw, 68px); line-height: .98; letter-spacing: -.01em;
+  color: var(--ink);
+}
+.hero-title em { font-style: normal; color: var(--yellow); }
+.hero-sub {
+  margin-top: 20px; font-size: 15px; color: var(--ink-2); letter-spacing: .04em;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-bar { width: 30px; height: 4px; background: var(--yellow); flex-shrink: 0; }
+
+/* ── Section heads: EN CAPS + 中文 ── */
+.sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px; }
+.sec-en { font-family: var(--font-en); font-weight: 800; font-size: 15px; letter-spacing: .22em; }
+.sec-zh { font-size: 13px; color: var(--ink-3); letter-spacing: .15em; }
+.sec-head::after { content: ''; flex: 1; height: 1px; background: var(--line); transform: translateY(-4px); }
+
+/* ── Upload ── */
+.upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.upload-card {
+  background: var(--surface); border-radius: var(--radius); padding: 24px 26px;
+  border: 1.5px dashed #C6C9CD; box-shadow: var(--card-shadow);
+  transition: border-color .2s var(--ease), transform .25s var(--ease), box-shadow .25s var(--ease);
+}
+.upload-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); border-color: var(--ink-3); }
+.upload-card.has-file { border-style: solid; border-color: var(--yellow); }
+.upload-card .tag {
+  display: inline-block; padding: 4px 11px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em; margin-bottom: 12px;
+}
+.tag-shared { background: var(--badge-shared-bg); color: var(--badge-shared-fg); }
+.tag-personal { background: var(--line-soft); color: var(--ink-2); }
+.upload-card .title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.upload-card .hint { font-size: 12px; color: var(--ink-3); margin-bottom: 18px; }
+.file-input-wrap { display: flex; align-items: center; gap: 12px; }
+.btn-upload {
+  background: var(--surface); color: var(--ink); border: 1.5px solid var(--ink);
+  border-radius: var(--radius-sm); padding: 7px 18px; font-size: 13px; cursor: pointer;
+  font-weight: 700; flex-shrink: 0; letter-spacing: .05em;
+  transition: background .18s var(--ease), color .18s var(--ease), transform .18s var(--ease);
+}
+.btn-upload:hover { background: var(--ink); color: #fff; }
+.btn-upload:active { transform: translateY(1px); }
+.file-name { font-size: 12px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-status { margin-top: 14px; font-size: 12px; color: var(--ink); font-weight: 600; display: none; align-items: center; gap: 7px; }
+.file-status::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); border: 1.5px solid var(--ink); display: inline-block; flex-shrink: 0; }
+.upload-card.has-file .file-status { display: flex; }
+.file-status .muted { color: var(--ink-3); font-weight: 400; }
+input[type=file] { display: none; }
+
+.analyze-btn {
+  width: 100%; height: 52px; background: var(--acc-bg); color: var(--acc-fg);
+  border: none; border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; cursor: pointer;
+  transition: background .18s var(--ease), transform .25s cubic-bezier(.34, 1.56, .64, 1), box-shadow .2s var(--ease);
+  margin-bottom: 40px;
+}
+.ab-label { letter-spacing: .35em; text-indent: .35em; transform: translateX(22px); transition: transform .3s cubic-bezier(.34, 1.56, .64, 1); }
+.ab-circle {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: #fff;
+  display: flex; align-items: center; justify-content: center; margin-left: 14px; flex-shrink: 0;
+  opacity: 0; transform: translateX(-14px) scale(.4);
+  transition: transform .3s cubic-bezier(.34, 1.56, .64, 1), opacity .18s var(--ease);
+}
+.analyze-btn:hover:not(:disabled) { background: var(--yellow-deep); transform: translateY(-1px) scale(1.015, .96); box-shadow: var(--card-shadow-hover); }
+.analyze-btn:hover:not(:disabled) .ab-label { transform: translateX(0); }
+.analyze-btn:hover:not(:disabled) .ab-circle { opacity: 1; transform: translateX(0) scale(1); }
+.analyze-btn:active:not(:disabled) { transform: translateY(1px) scale(1.03, .9); }
+.analyze-btn:disabled { opacity: .3; cursor: not-allowed; }
+body.no-motion .ab-label, body.no-motion .ab-circle { transition: none; }
+
+/* ── Filter bar ── */
+.filter-bar {
+  background: var(--surface); border-radius: var(--radius); padding: 14px 20px;
+  border: var(--card-border); box-shadow: var(--card-shadow); margin-bottom: 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.month-pills-wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.month-label { font-family: var(--font-en); font-size: 11px; font-weight: 800; letter-spacing: .2em; color: var(--ink-3); white-space: nowrap; }
+#month-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.month-pill {
+  padding: 6px 16px; border-radius: 999px; border: 1.5px solid var(--line);
+  background: var(--surface); font-size: 13px; color: var(--ink-2); cursor: pointer;
+  white-space: nowrap; font-weight: 500;
+  transition: border-color .15s var(--ease), color .15s var(--ease), background .15s var(--ease), transform .15s var(--ease);
+}
+.month-pill:hover { border-color: var(--ink); color: var(--ink); transform: translateY(-1px); }
+.month-pill.active { background: var(--acc-bg); border-color: var(--acc-bg); color: var(--acc-fg); font-weight: 700; }
+
+/* ── Toggle ── */
+.toggle-wrap { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.toggle-label { font-size: 12px; color: var(--ink-2); white-space: nowrap; text-align: right; line-height: 1.5; }
+.toggle-label span { color: var(--ink-3); font-size: 11px; }
+.toggle { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: #D2D5D9; border-radius: 22px; cursor: pointer; transition: .2s var(--ease); }
+.toggle-slider:before {
+  content: ''; position: absolute; width: 16px; height: 16px; left: 3px; bottom: 3px;
+  background: #fff; border-radius: 50%; transition: .2s var(--ease); box-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+input:checked + .toggle-slider { background: var(--ink); }
+input:checked + .toggle-slider:before { transform: translateX(18px); background: var(--yellow); }
+
+/* ── Summary cards ── */
+.summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.sum-card {
+  background: var(--surface); border-radius: var(--radius); padding: 22px 22px 19px;
+  border: var(--card-border); box-shadow: var(--card-shadow); position: relative; overflow: hidden;
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+}
+.sum-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); }
+.sum-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--line); }
+.sum-card.is-accent::before { background: var(--yellow); }
+.sum-card .label { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: var(--ink-3); margin-bottom: 12px; }
+.sum-card .amount { font-family: var(--font-en); font-size: 27px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); }
+.sum-card .amount .cur { font-size: 13px; font-weight: 700; color: var(--ink-3); margin-right: 4px; letter-spacing: .04em; }
+.sum-card .meta { font-size: 11.5px; color: var(--ink-3); margin-top: 8px; }
+
+/* ── Cards / section titles ── */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card, .cat-section, .detail-section {
+  background: var(--surface); border-radius: var(--radius); padding: 24px 26px;
+  border: var(--card-border); box-shadow: var(--card-shadow);
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+}
+.chart-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); }
+.cat-section { margin-bottom: 24px; }
+.chart-card h3, .cat-section h3, .detail-header h3 {
+  font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: .06em;
+  display: flex; align-items: center; gap: 9px;
+}
+.chart-card h3::before, .cat-section h3::before, .detail-header h3::before {
+  content: ''; width: 9px; height: 9px; background: var(--yellow); flex-shrink: 0;
+}
+.chart-card h3 { margin-bottom: 18px; }
+.cat-section h3 { margin-bottom: 16px; }
+.chart-wrap { position: relative; height: 240px; }
+
+/* ── Cat tabs ── */
+.cat-tabs { display: flex; gap: 0; margin-bottom: 18px; border: 1px solid var(--line); border-radius: var(--radius-sm); width: fit-content; overflow: hidden; }
+.cat-tab {
+  padding: 6px 20px; border: none; border-right: 1px solid var(--line); background: var(--surface);
+  font-size: 12.5px; color: var(--ink-2); cursor: pointer; font-weight: 500;
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.cat-tab:last-child { border-right: none; }
+.cat-tab:hover { color: var(--ink); background: var(--yellow-tint); }
+.cat-tab.active { background: var(--acc-bg); color: var(--acc-fg); font-weight: 700; }
+
+/* ── Tables ── */
+.cat-table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  text-align: left; padding: 9px 12px; font-size: 11px; font-weight: 700;
+  color: var(--ink-3); letter-spacing: .12em; border-bottom: 1.5px solid var(--ink); white-space: nowrap;
+}
+.cat-table th:not(:first-child) { text-align: right; }
+td { padding: 11px 12px; border-bottom: 1px solid var(--line-soft); }
+.cat-table td:not(:first-child) { text-align: right; }
+tr:hover td { background: var(--yellow-tint); }
+.bar-bg { background: var(--line-soft); border-radius: 2px; height: 6px; min-width: 80px; display: inline-block; vertical-align: middle; margin-left: 8px; width: 100%; }
+.bar-fill { display: block; height: 6px; border-radius: 2px; background: var(--yellow); transition: width .6s var(--ease); }
+.bar-fill.green { background: var(--ink); opacity: .55; }
+.pct-cell { color: var(--ink-2); }
+.cell-date { color: var(--ink-2); white-space: nowrap; }
+.cell-name { font-weight: 500; color: var(--ink); }
+.cell-memo { color: var(--ink-3); font-size: 12px; }
+.cell-empty { text-align: center; color: var(--ink-3); padding: 24px; }
+.sub-amt { text-align: right; font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+
+/* ── Detail header / sort / filter ── */
+.detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.clear-filters-btn {
+  padding: 5px 14px; border-radius: 999px; border: 1.5px solid var(--ink);
+  background: var(--surface); font-size: 12px; font-weight: 600; cursor: pointer; color: var(--ink); display: none;
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.clear-filters-btn.visible { display: block; }
+.clear-filters-btn:hover { background: var(--ink); color: #fff; }
+th.sortable, th.filterable { cursor: pointer; user-select: none; transition: color .15s var(--ease); }
+th.sortable:hover, th.filterable:hover { color: var(--ink); }
+th.filter-active { color: var(--ink); }
+th.filter-active .th-dot { display: inline-block; }
+.th-dot { display: none; width: 6px; height: 6px; background: var(--yellow); border-radius: 50%; margin-left: 5px; vertical-align: middle; margin-bottom: 1px; }
+.sort-icon { margin-left: 4px; opacity: .4; font-style: normal; }
+.sort-icon.active { opacity: 1; color: var(--yellow-deep); }
+.filter-icon { margin-left: 4px; opacity: .4; font-size: 10px; }
+th.filterable:hover .filter-icon, th.filter-active .filter-icon { opacity: .8; }
+
+/* ── Badges ── */
+.badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .03em; }
+.badge-shared { background: var(--badge-shared-bg); color: var(--badge-shared-fg); }
+.badge-personal { background: var(--line-soft); color: var(--ink-2); }
+.cat-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); }
+.amount-cell { font-weight: 700; font-family: var(--font-body); font-variant-numeric: tabular-nums; font-size: 13px; }
+.row-count { font-size: 12px; color: var(--ink-3); margin-top: 12px; text-align: right; letter-spacing: .05em; }
+
+/* ── Popover ── */
+.col-popover {
+  position: fixed; background: var(--surface); border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(31,33,37,.14); border: var(--card-border);
+  padding: 14px; z-index: 999; min-width: 160px; max-width: 240px; display: none;
+}
+.pop-title { font-size: 11px; font-weight: 700; color: var(--ink-3); letter-spacing: .14em; margin-bottom: 10px; }
+.pop-check-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; margin-bottom: 10px; }
+.pop-check-item { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.pop-check-item:hover { background: var(--yellow-tint); }
+.pop-check-item input { cursor: pointer; accent-color: var(--yellow-deep); width: 14px; height: 14px; }
+.pop-type-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.pop-type-pill {
+  padding: 5px 13px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface);
+  font-size: 12px; color: var(--ink-2); cursor: pointer; transition: all .12s var(--ease);
+}
+.pop-type-pill:hover { border-color: var(--ink); color: var(--ink); }
+.pop-type-pill.active { background: var(--acc-bg); border-color: var(--acc-bg); color: var(--acc-fg); font-weight: 700; }
+.pop-memo-wrap { display: flex; gap: 6px; align-items: center; }
+.pop-input { padding: 7px 10px; border-radius: var(--radius-sm); border: 1.5px solid var(--line); font-size: 13px; outline: none; flex: 1; font-family: var(--font-body); }
+.pop-input:focus { border-color: var(--yellow); }
+.pop-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+.pop-btn { padding: 5px 13px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-2); transition: all .15s var(--ease); }
+.pop-btn:hover { border-color: var(--ink); color: var(--ink); }
+.pop-btn.primary { background: var(--acc-bg); color: var(--acc-fg); border-color: var(--acc-bg); }
+.pop-btn.primary:hover { background: var(--yellow-deep); border-color: var(--yellow-deep); }
+
+/* ── Empty state ── */
+#dashboard { display: none; }
+.empty-state { text-align: center; padding: 64px 20px 72px; color: var(--ink-3); }
+.empty-state .glyph {
+  width: 52px; height: 52px; margin: 0 auto 18px; border: 2px solid var(--ink);
+  border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  background: var(--surface); box-shadow: 4px 4px 0 var(--yellow);
+}
+.empty-state .glyph svg { stroke: var(--ink); }
+.empty-state p { font-size: 13px; letter-spacing: .1em; }
+.demo-link {
+  margin-top: 22px; background: none; border: none; cursor: pointer;
+  font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: .08em;
+  padding: 4px 2px; border-bottom: 2.5px solid var(--yellow);
+  transition: background .18s var(--ease);
+}
+.demo-link:hover { background: var(--yellow-soft); }
+
+/* ── Scroll reveal ──
+   Base state is VISIBLE. JS adds .pre (hidden) only after a real animation
+   frame has fired, so the page can never get stuck blank when frames are
+   throttled (embedded iframes, background tabs). .in animates back in. */
+.reveal.pre { opacity: 0; transform: translateY(18px); }
+.reveal.in {
+  opacity: 1; transform: none;
+  transition: opacity .6s var(--ease), transform .6s var(--ease);
+  transition-delay: calc(var(--rev, 0) * 80ms);
+}
+.reveal.in.instant { transition: none; }
+body.no-motion .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  * { transition-duration: .01ms !important; }
+}
+body.no-motion :is(.sum-card, .chart-card, .upload-card, .month-pill, .analyze-btn):hover { transform: none; }
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .summary-row { grid-template-columns: 1fr 1fr; }
+  .charts-row { grid-template-columns: 1fr; }
+  .upload-section { grid-template-columns: 1fr; }
+  .hero { padding: 36px 28px 40px; }
+  .hero-deco { opacity: .45; }
+}
+
+</style>
+</head>
+<body data-theme="gallery" data-screen-label="消費分析">
+
+<div class="masthead">
+  <div class="hero-deco" aria-hidden="true">
+    <svg viewBox="0 0 680 380" preserveAspectRatio="xMaxYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <path class="deco-shape" data-push="0.3" fill="#E2E4E8" d="M740 -60 L740 250 C650 312 566 322 504 282 C452 248 444 178 402 146 C352 108 334 28 376 -60 Z"></path>
+      <path class="deco-shape" data-push="0.7" fill="#F6E8BC" d="M452 232 C506 226 552 262 556 312 C560 364 518 404 464 402 C408 400 366 362 368 312 C370 266 402 238 452 232 Z"></path>
+      <circle class="deco-shape" data-push="1.1" cx="318" cy="74" r="20" fill="#D9DCE0"></circle>
+      <circle class="deco-shape" data-push="1.4" cx="348" cy="180" r="11" fill="#F2D684"></circle>
+    </svg>
+  </div>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-en">EXPENSE</span>
+      <span class="brand-zh">消費分析</span>
+    </div>
+  </header>
+  <div class="hero reveal">
+    <h1 class="hero-title">EXPENSE<br><em>ANALYTICS</em></h1>
+    <p class="hero-sub"><span class="hero-bar"></span>上傳帳單，掌握每一筆花費的去向</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="sec-head reveal"><span class="sec-en">UPLOAD</span><span class="sec-zh">上傳帳單</span></div>
+
+  <div class="upload-section">
+    <div class="upload-card reveal" id="card-shared">
+      <span class="tag tag-shared">共同帳單</span>
+      <div class="title">撫順街共同支出</div>
+      <div class="hint">自動排除收入與轉帳項目</div>
+      <div class="file-input-wrap">
+        <button class="btn-upload" onclick="document.getElementById('file-shared').click()">選擇檔案</button>
+        <span class="file-name" id="name-shared">尚未選擇</span>
+      </div>
+      <div class="file-status" id="status-shared"></div>
+      <input type="file" id="file-shared" accept=".csv">
+    </div>
+    <div class="upload-card reveal" id="card-personal" style="--rev:1">
+      <span class="tag tag-personal">個人帳單</span>
+      <div class="title">個人消費記錄</div>
+      <div class="hint">自動識別帳單持有人</div>
+      <div class="file-input-wrap">
+        <button class="btn-upload" onclick="document.getElementById('file-personal').click()">選擇檔案</button>
+        <span class="file-name" id="name-personal">尚未選擇</span>
+      </div>
+      <div class="file-status" id="status-personal"></div>
+      <input type="file" id="file-personal" accept=".csv">
+    </div>
+  </div>
+
+  <button class="analyze-btn reveal" id="analyze-btn" disabled onclick="analyze()">
+    <span class="ab-label">開始分析</span>
+    <span class="ab-circle" aria-hidden="true">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"></path><path d="M13 6l6 6-6 6"></path></svg>
+    </span>
+  </button>
+
+  <div id="dashboard">
+
+    <!-- Month + toggle filter bar -->
+    <div class="filter-bar reveal">
+      <div class="month-pills-wrap">
+        <span class="month-label">MONTH</span>
+        <div id="month-pills"></div>
+      </div>
+      <div class="toggle-wrap">
+        <div class="toggle-label">排除固定支出<br><span>（房貸、孝親費）</span></div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-fixed" onchange="onFilterChange()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="sec-head reveal"><span class="sec-en">SUMMARY</span><span class="sec-zh">本期總覽</span></div>
+
+    <!-- Summary cards -->
+    <div class="summary-row">
+      <div class="sum-card reveal"><div class="label">個人消費</div><div class="amount" id="sum-personal">-</div><div class="meta" id="meta-personal"></div></div>
+      <div class="sum-card reveal" style="--rev:1"><div class="label">共同消費</div><div class="amount" id="sum-shared">-</div><div class="meta" id="meta-shared"></div></div>
+      <div class="sum-card is-accent reveal" style="--rev:2"><div class="label">本期合計</div><div class="amount" id="sum-total">-</div><div class="meta" id="meta-total"></div></div>
+      <div class="sum-card reveal" style="--rev:3"><div class="label">平均每日消費</div><div class="amount" id="sum-avg">-</div><div class="meta" id="meta-avg"></div></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="chart-card reveal"><h3 id="personal-chart-title">個人消費分類</h3><div class="chart-wrap"><canvas id="chart-personal"></canvas></div></div>
+      <div class="chart-card reveal" style="--rev:1"><h3>共同消費分類</h3><div class="chart-wrap"><canvas id="chart-shared"></canvas></div></div>
+    </div>
+
+    <div class="sec-head reveal"><span class="sec-en">ANALYSIS</span><span class="sec-zh">類別分析</span></div>
+
+    <!-- Category analysis -->
+    <div class="cat-section reveal">
+      <h3>類別消費分析</h3>
+      <div class="cat-tabs">
+        <button class="cat-tab active" onclick="switchCatTab('all', this)">全部</button>
+        <button class="cat-tab" onclick="switchCatTab('personal', this)" id="cat-tab-personal">個人</button>
+        <button class="cat-tab" onclick="switchCatTab('shared', this)">共同</button>
+      </div>
+      <div class="cat-table-wrap">
+        <table class="cat-table">
+          <thead><tr><th>類別</th><th>筆數</th><th>金額 (TWD)</th><th>佔比</th><th style="min-width:160px"></th></tr></thead>
+          <tbody id="cat-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sec-head reveal"><span class="sec-en">DETAIL</span><span class="sec-zh">消費明細</span></div>
+
+    <!-- Detail table -->
+    <div class="detail-section reveal">
+      <div class="detail-header">
+        <h3>消費明細</h3>
+        <button class="clear-filters-btn" id="clear-filters-btn" onclick="resetDetailFilters()">重設篩選</button>
+      </div>
+      <table id="detail-table">
+        <thead>
+          <tr>
+            <th class="sortable" onclick="sortBy('date')">日期 <span class="sort-icon" id="sort-date">↕</span></th>
+            <th>名稱</th>
+            <th class="filterable" id="th-cat" onclick="toggleColFilter('cat', this)">類別 <span class="filter-icon">▾</span><span class="th-dot"></span></th>
+            <th class="filterable" id="th-type" onclick="toggleColFilter('type', this)">帳單 <span class="filter-icon">▾</span><span class="th-dot"></span></th>
+            <th class="sortable" onclick="sortBy('amount')" style="text-align:right">金額 <span class="sort-icon" id="sort-amount">↕</span></th>
+            <th class="filterable" id="th-memo" onclick="toggleColFilter('memo', this)">備忘錄 <span class="filter-icon">▾</span><span class="th-dot"></span></th>
+          </tr>
+        </thead>
+        <tbody id="detail-tbody"></tbody>
+      </table>
+      <div class="row-count" id="row-count"></div>
+      <!-- Column filter popover lives here for reliable absolute positioning -->
+      <div class="col-popover" id="col-popover"></div>
+    </div>
+
+  </div>
+
+  <div class="empty-state reveal" id="empty-state">
+    <div class="glyph">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 3v18h18"></path><path d="M7 14l4-4 3 3 5-6"></path>
+      </svg>
+    </div>
+    <p>請上傳帳單 CSV 開始分析</p>
+    <button class="demo-link" onclick="loadDemo()">或載入範例資料先看看效果 →</button>
+  </div>
+
+</div>
+
+<script>
+// ── 消費分析 app logic (functionality identical to original; visual hooks only) ──
+
+// ── Constants ──────────────────────────────────────────
+const EXCLUDE_CATS = ['收入', '轉帳'];
+const FIXED_NAMES  = ['房貸', '孝親費'];
+function normCat(c) { return c === '外出用餐' ? '用餐' : c; }
+
+// YooDesign palette: yellow lead + ink/gray scale + warm supports
+const COLORS = ['#F9B414','#23252A','#C8CBCF','#7A8087','#FFD25C','#4D525A','#E2E3E6','#A8845A','#999FA7','#6B5E4A','#D9B14B','#3A3D43','#BFA77E','#85868A','#EBD9A0'];
+
+if (window.Chart) {
+  Chart.defaults.font.family = "'Montserrat','Noto Sans TC',sans-serif";
+}
+
+// ── State ──────────────────────────────────────────────
+let sharedRaw = null, personalRaw = null;
+let personName = '';
+let allRows = [], baseRows = [], filteredRows = [];
+let selectedMonth = 'all';
+let catTabMode = 'all';
+let sortKey = 'date', sortDir = -1;
+let chartPersonal = null, chartShared = null;
+let availableCats = [];
+
+// Detail filters (JS state, not form elements)
+let detailFilters = { cats: new Set(), type: '', memo: '' };
+
+// Popover state
+let activePopCol = null;
+
+// ── CSV parsing ────────────────────────────────────────
+function parseCsv(text) {
+  const lines = text.trim().split('\n');
+  const headers = parseLine(lines[0]);
+  const rows = [];
+  let exportTime = '';
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const exp = lines[i].match(/匯出於\s*(.+)/); // CSV 末行的匯出時間，獨立擷取不進資料
+    if (exp) { exportTime = exp[1].replace(/"/g, '').trim(); continue; }
+    const vals = parseLine(lines[i]);
+    const row = {};
+    headers.forEach((h, idx) => row[h] = (vals[idx] || '').trim());
+    rows.push(row);
+  }
+  return { headers, rows, exportTime };
+}
+function parseLine(line) {
+  const result = []; let cur = '', inQ = false;
+  for (const c of line) {
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { result.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur); return result;
+}
+function parseAmount(s) { return parseFloat(s.replace(/,/g, '')) || 0; }
+function parseDate(s) {
+  const m = s.match(/(\d+)年(\d+)月(\d+)日/);
+  return m ? new Date(+m[1], +m[2]-1, +m[3]) : new Date(s);
+}
+function monthKey(d) { return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}`; }
+function monthLabel(k) { const [y,m] = k.split('/'); return `${y}年${parseInt(m)}月`; }
+function detectPerson(headers) {
+  const h = headers.find(h => /\(欠款\)|（欠款）/.test(h));
+  return h ? h.replace(/\s*[（(]欠款[)）]\s*/, '').trim() : '未知';
+}
+function fmt(n) { return 'NT$ ' + Math.round(n).toLocaleString('zh-TW'); }
+function fmtCard(n) { return `<span class="cur">NT$</span>${Math.round(n).toLocaleString('zh-TW')}`; }
+
+// ── File inputs ────────────────────────────────────────
+function setupFileInput(inputId, cardId, nameId, statusId, type) {
+  document.getElementById(inputId).addEventListener('change', function () {
+    const file = this.files[0]; if (!file) return;
+    document.getElementById(nameId).textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const { headers, rows, exportTime } = parseCsv(e.target.result);
+      const exportNote = exportTime ? `<span class="muted">&nbsp;· 匯出於 ${exportTime}</span>` : '';
+      if (type === 'shared') {
+        sharedRaw = rows.filter(r => !EXCLUDE_CATS.includes(r['類別']));
+        document.getElementById(cardId).classList.add('has-file');
+        document.getElementById(statusId).innerHTML = `已載入 ${sharedRaw.length} 筆消費${exportNote}`;
+      } else {
+        personName = detectPerson(headers);
+        personalRaw = rows;
+        document.getElementById(cardId).classList.add('has-file');
+        document.getElementById(statusId).innerHTML = `已載入 ${rows.length} 筆（${personName}）${exportNote}`;
+        document.getElementById('cat-tab-personal').textContent = personName || '個人';
+      }
+      checkReady();
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+function checkReady() {
+  document.getElementById('analyze-btn').disabled = !(sharedRaw || personalRaw);
+}
+
+// ── Build allRows ──────────────────────────────────────
+function buildAllRows() {
+  allRows = [];
+  function add(rows, type) {
+    rows && rows.forEach(r => {
+      const d = parseDate(r['日期']);
+      const totalAmt = parseAmount(r['金額']);
+      let amount = totalAmt;
+      if (type === 'shared' && personName) {
+        const key = `${personName} (欠款)`;
+        if (r[key] !== undefined) amount = parseAmount(r[key]);
+      }
+      allRows.push({ date: d, dateFmt: `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`, name: r['名稱'], cat: normCat(r['類別']), type, amount, totalAmt, memo: r['備忘錄'] || '' });
+    });
+  }
+  add(personalRaw, 'personal');
+  add(sharedRaw, 'shared');
+}
+
+// ── Month pills ────────────────────────────────────────
+function buildMonthPills() {
+  const months = new Set();
+  allRows.forEach(r => { if (!isNaN(r.date)) months.add(monthKey(r.date)); });
+  const sorted = [...months].sort().reverse();
+  const container = document.getElementById('month-pills');
+  container.innerHTML = '';
+  const allPill = document.createElement('button');
+  allPill.className = 'month-pill' + (selectedMonth === 'all' ? ' active' : '');
+  allPill.textContent = '全部'; allPill.onclick = () => selectMonth('all', allPill);
+  container.appendChild(allPill);
+  sorted.forEach(mk => {
+    const btn = document.createElement('button');
+    btn.className = 'month-pill' + (selectedMonth === mk ? ' active' : '');
+    btn.textContent = monthLabel(mk); btn.onclick = () => selectMonth(mk, btn);
+    container.appendChild(btn);
+  });
+}
+function selectMonth(mk, btn) {
+  selectedMonth = mk;
+  document.querySelectorAll('.month-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  onFilterChange();
+}
+
+// ── Filter chain ───────────────────────────────────────
+function getBaseRows() {
+  const excludeFixed = document.getElementById('toggle-fixed').checked;
+  let rows = selectedMonth === 'all' ? allRows : allRows.filter(r => monthKey(r.date) === selectedMonth);
+  if (excludeFixed) rows = rows.filter(r => !FIXED_NAMES.includes(r.name));
+  return [...rows].sort((a, b) => b.date - a.date);
+}
+function onFilterChange() {
+  baseRows = getBaseRows();
+  renderDashboard(baseRows);
+  resetDetailFilters(false);
+  applyDetailFilters();
+}
+
+// ── Main analyze ───────────────────────────────────────
+function analyze() {
+  buildAllRows();
+  buildMonthPills();
+  baseRows = getBaseRows();
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  renderDashboard(baseRows);
+  resetDetailFilters(false);
+  applyDetailFilters();
+}
+
+// ── Dashboard render ───────────────────────────────────
+function renderDashboard(rows) {
+  const personal = rows.filter(r => r.type === 'personal');
+  const shared   = rows.filter(r => r.type === 'shared');
+  const pTotal = personal.reduce((s, r) => s + r.amount, 0);
+  const sTotal = shared.reduce((s, r) => s + r.amount, 0);
+  const total = pTotal + sTotal;
+  let days = 30;
+  if (rows.length) {
+    const dates = rows.map(r => r.date);
+    days = Math.max(1, Math.round((new Date(Math.max(...dates)) - new Date(Math.min(...dates))) / 86400000) + 1);
+  }
+  document.getElementById('sum-personal').innerHTML = fmtCard(pTotal);
+  document.getElementById('meta-personal').textContent = `${personName || '個人'} · ${personal.length} 筆`;
+  document.getElementById('sum-shared').innerHTML = fmtCard(sTotal);
+  document.getElementById('meta-shared').textContent = `撫順街 · ${shared.length} 筆`;
+  document.getElementById('sum-total').innerHTML = fmtCard(total);
+  document.getElementById('meta-total').textContent = `共 ${rows.length} 筆`;
+  document.getElementById('sum-avg').innerHTML = fmtCard(total / days);
+  document.getElementById('meta-avg').textContent = `統計 ${days} 天`;
+  if (personName) document.getElementById('personal-chart-title').textContent = `${personName} 消費分類`;
+  chartPersonal = drawPie('chart-personal', catBreakdown(personal), chartPersonal);
+  chartShared   = drawPie('chart-shared',   catBreakdown(shared),   chartShared);
+  buildCatTable(rows, catTabMode);
+  availableCats = [...new Set(rows.map(r => r.cat))].sort();
+}
+
+// ── Charts ─────────────────────────────────────────────
+function catBreakdown(rows) {
+  const map = {};
+  rows.forEach(r => { const c = r.cat || '其他'; map[c] = (map[c]||0) + r.amount; });
+  return Object.entries(map).sort((a, b) => b[1] - a[1]);
+}
+function drawPie(canvasId, data, existing) {
+  if (existing) existing.destroy();
+  if (!data.length) return null;
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: data.map(d => d[0]), datasets: [{ data: data.map(d => d[1]), backgroundColor: COLORS, borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'right', labels: { font: { size: 11 }, color: '#5B6066', boxWidth: 10, boxHeight: 10, padding: 9 } }, tooltip: { backgroundColor: '#1F2125', padding: 10, cornerRadius: 8, callbacks: { label: item => ` ${item.label}: ${fmt(item.raw)}` } } } }
+  });
+}
+
+// ── Category table ─────────────────────────────────────
+function switchCatTab(mode, btn) {
+  catTabMode = mode;
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildCatTable(baseRows, mode);
+}
+function buildCatTable(rows, mode) {
+  const subset = mode === 'all' ? rows : rows.filter(r => r.type === mode);
+  const totalAmt = subset.reduce((s, r) => s + r.amount, 0);
+  const map = {};
+  subset.forEach(r => { const c = r.cat || '其他'; if (!map[c]) map[c] = {count:0,amount:0}; map[c].count++; map[c].amount += r.amount; });
+  const entries = Object.entries(map).sort((a, b) => b[1].amount - a[1].amount);
+  const maxAmt = entries.length ? entries[0][1].amount : 1;
+  const isShared = mode === 'shared';
+  document.getElementById('cat-tbody').innerHTML = entries.map(([cat, {count, amount}]) => {
+    const pct = totalAmt ? (amount/totalAmt*100).toFixed(1) : '0.0';
+    const barW = Math.round(amount/maxAmt*100);
+    return `<tr><td><span class="cat-badge">${cat}</span></td><td style="text-align:right">${count}</td><td style="text-align:right" class="amount-cell">${fmt(amount)}</td><td style="text-align:right" class="pct-cell">${pct}%</td><td><span class="bar-bg"><span class="bar-fill${isShared?' green':''}" style="width:${barW}%"></span></span></td></tr>`;
+  }).join('') || '<tr><td colspan="5" class="cell-empty">無資料</td></tr>';
+}
+
+// ── Column popover ─────────────────────────────────────
+function toggleColFilter(col, thEl) {
+  if (activePopCol === col) { closePopover(); return; }
+  closePopover();
+  activePopCol = col;
+  const pop = document.getElementById('col-popover');
+  pop.innerHTML = buildPopoverHTML(col);
+  pop.style.display = 'block';
+  const thRect = thEl.getBoundingClientRect();
+  pop.style.top  = (thRect.bottom + 6) + 'px';
+  pop.style.left = thRect.left + 'px';
+  // Adjust if off right edge of viewport
+  requestAnimationFrame(() => {
+    const pr = pop.getBoundingClientRect();
+    if (pr.right > window.innerWidth - 12) {
+      pop.style.left = (window.innerWidth - pr.width - 12) + 'px';
+    }
+  });
+}
+
+function closePopover() {
+  document.getElementById('col-popover').style.display = 'none';
+  activePopCol = null;
+}
+
+function buildPopoverHTML(col) {
+  if (col === 'cat') {
+    const items = availableCats.map(c => `
+      <label class="pop-check-item">
+        <input type="checkbox" value="${c}" ${detailFilters.cats.has(c) ? 'checked' : ''} onchange="onCatCheck(this)">
+        <span>${c}</span>
+      </label>`).join('');
+    return `<div class="pop-title">類別篩選</div><div class="pop-check-list">${items}</div>
+      <div class="pop-actions"><button class="pop-btn" onclick="clearCatFilter()">清除</button><button class="pop-btn primary" onclick="closePopover()">完成</button></div>`;
+  }
+  if (col === 'type') {
+    const opts = [['', '全部'], ['personal', personName || '個人'], ['shared', '共同']];
+    const pills = opts.map(([v, label]) => `<button class="pop-type-pill${detailFilters.type === v ? ' active' : ''}" onclick="setTypeFilter('${v}')">${label}</button>`).join('');
+    return `<div class="pop-title">帳單篩選</div><div class="pop-type-pills">${pills}</div>`;
+  }
+  if (col === 'memo') {
+    return `<div class="pop-title">備忘錄搜尋</div>
+      <div class="pop-memo-wrap">
+        <input class="pop-input" id="memo-pop-input" placeholder="輸入關鍵字…" value="${detailFilters.memo}" oninput="setMemoFilter(this.value)">
+      </div>
+      <div class="pop-actions"><button class="pop-btn" onclick="setMemoFilter('');document.getElementById('memo-pop-input').value=''">清除</button><button class="pop-btn primary" onclick="closePopover()">完成</button></div>`;
+  }
+}
+
+// ── Detail filter handlers ─────────────────────────────
+function onCatCheck(checkbox) {
+  if (checkbox.checked) detailFilters.cats.add(checkbox.value);
+  else detailFilters.cats.delete(checkbox.value);
+  applyDetailFilters();
+}
+function clearCatFilter() {
+  detailFilters.cats.clear();
+  document.querySelectorAll('#col-popover input[type=checkbox]').forEach(cb => cb.checked = false);
+  applyDetailFilters();
+}
+function setTypeFilter(val) {
+  detailFilters.type = val;
+  // update pill states in popover
+  document.querySelectorAll('.pop-type-pill').forEach(b => b.classList.toggle('active', b.textContent.trim() === (val === '' ? '全部' : val === 'personal' ? (personName || '個人') : '共同')));
+  applyDetailFilters();
+}
+function setMemoFilter(val) {
+  detailFilters.memo = val;
+  applyDetailFilters();
+}
+
+function applyDetailFilters() {
+  filteredRows = baseRows.filter(r => {
+    const catOk  = detailFilters.cats.size === 0 || detailFilters.cats.has(r.cat);
+    const typeOk = !detailFilters.type || r.type === detailFilters.type;
+    const memoOk = !detailFilters.memo || r.memo.toLowerCase().includes(detailFilters.memo.toLowerCase()) || r.name.toLowerCase().includes(detailFilters.memo.toLowerCase());
+    return catOk && typeOk && memoOk;
+  });
+  applySort();
+  renderDetail(filteredRows);
+  updateHeaderIndicators();
+}
+
+function resetDetailFilters(render = true) {
+  detailFilters = { cats: new Set(), type: '', memo: '' };
+  closePopover();
+  updateHeaderIndicators();
+  if (render) applyDetailFilters();
+}
+
+function updateHeaderIndicators() {
+  const hasCat  = detailFilters.cats.size > 0;
+  const hasType = !!detailFilters.type;
+  const hasMemo = !!detailFilters.memo;
+  document.getElementById('th-cat').classList.toggle('filter-active', hasCat);
+  document.getElementById('th-type').classList.toggle('filter-active', hasType);
+  document.getElementById('th-memo').classList.toggle('filter-active', hasMemo);
+  const hasAny = hasCat || hasType || hasMemo;
+  document.getElementById('clear-filters-btn').classList.toggle('visible', hasAny);
+}
+
+// ── Sort ───────────────────────────────────────────────
+function sortBy(key) {
+  if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = -1; }
+  document.querySelectorAll('.sort-icon').forEach(el => { el.classList.remove('active'); el.textContent = '↕'; });
+  const icon = document.getElementById('sort-' + key);
+  icon.classList.add('active'); icon.textContent = sortDir === -1 ? '↓' : '↑';
+  applySort(); renderDetail(filteredRows);
+}
+function applySort() {
+  filteredRows.sort((a, b) => {
+    const va = sortKey === 'date' ? a.date : a.amount;
+    const vb = sortKey === 'date' ? b.date : b.amount;
+    return (va > vb ? 1 : va < vb ? -1 : 0) * sortDir;
+  });
+}
+
+// ── Render detail ──────────────────────────────────────
+function renderDetail(rows) {
+  const tbody = document.getElementById('detail-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="cell-empty">沒有符合條件的資料</td></tr>';
+    document.getElementById('row-count').textContent = ''; return;
+  }
+  const label = personName || '個人';
+  tbody.innerHTML = rows.map(r => {
+    const showTotal = r.type === 'shared' && personName && r.totalAmt !== r.amount;
+    const amountCell = `<div class="amount-cell" style="text-align:right">${fmt(r.amount)}</div>`
+      + (showTotal ? `<div class="sub-amt">總 ${fmt(r.totalAmt)}</div>` : '');
+    return `<tr>
+      <td class="cell-date">${r.dateFmt}</td>
+      <td class="cell-name">${r.name}</td>
+      <td><span class="cat-badge">${r.cat}</span></td>
+      <td><span class="badge ${r.type==='shared'?'badge-shared':'badge-personal'}">${r.type==='shared'?'共同':label}</span></td>
+      <td>${amountCell}</td>
+      <td class="cell-memo">${r.memo}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('row-count').textContent = `顯示 ${rows.length} 筆`;
+}
+
+// ── Close popover on outside click ────────────────────
+document.addEventListener('click', e => {
+  const pop = document.getElementById('col-popover');
+  if (pop.style.display === 'none') return;
+  if (pop.contains(e.target)) return;
+  if (e.target.closest('th.filterable')) return;
+  closePopover();
+});
+
+// ── Demo data (範例資料，不需上傳即可預覽) ──────────────
+function loadDemo() {
+  personName = '小宇';
+  const S = (d, n, c, a, h, m = '') => ({ '日期': d, '名稱': n, '類別': c, '金額': String(a), '小宇 (欠款)': String(h), '備忘錄': m });
+  const P = (d, n, c, a, m = '') => ({ '日期': d, '名稱': n, '類別': c, '金額': String(a), '備忘錄': m });
+  const D = (m, d) => `2026年${m}月${d}日`;
+  sharedRaw = [
+    S(D(3,1),'房貸','居住',35000,17500), S(D(3,5),'台電電費','帳單',1860,930), S(D(3,8),'自來水費','帳單',420,210),
+    S(D(3,10),'中華電信網路','帳單',899,450), S(D(3,12),'全聯採買','日用品',2380,1190), S(D(3,15),'foodpanda 晚餐','用餐',520,260),
+    S(D(3,19),'鼎泰豐','用餐',1880,940,'媽媽生日'), S(D(3,22),'家樂福採買','日用品',3120,1560), S(D(3,28),'好市多','日用品',4280,2140,'囤衛生紙'),
+    S(D(4,1),'房貸','居住',35000,17500), S(D(4,6),'台電電費','帳單',1620,810), S(D(4,9),'瓦斯費','帳單',680,340),
+    S(D(4,10),'中華電信網路','帳單',899,450), S(D(4,13),'全聯採買','日用品',2150,1075), S(D(4,17),'藏壽司','用餐',980,490),
+    S(D(4,20),'foodpanda 晚餐','用餐',612,306), S(D(4,24),'IKEA 收納櫃','購物',2990,1495,'客廳整理'), S(D(4,27),'好市多','日用品',3650,1825),
+    S(D(5,1),'房貸','居住',35000,17500), S(D(5,5),'台電電費','帳單',2240,1120,'開冷氣了'), S(D(5,8),'自來水費','帳單',438,219),
+    S(D(5,10),'中華電信網路','帳單',899,450), S(D(5,14),'全聯採買','日用品',2460,1230), S(D(5,18),'乾杯燒肉','用餐',2360,1180,'慶祝加薪'),
+    S(D(5,23),'UberEats 晚餐','用餐',489,245), S(D(5,29),'家樂福採買','日用品',2880,1440)
+  ];
+  personalRaw = [
+    P(D(3,1),'孝親費','孝親',10000), P(D(3,4),'悠遊卡加值','交通',1000), P(D(3,7),'路易莎咖啡','用餐',145),
+    P(D(3,11),'Netflix','訂閱',390), P(D(3,16),'Spotify','訂閱',149), P(D(3,18),'Uniqlo','購物',1280,'春裝'),
+    P(D(3,24),'牙醫洗牙','醫療',150), P(D(3,26),'誠品書店','購物',720),
+    P(D(4,1),'孝親費','孝親',10000), P(D(4,5),'悠遊卡加值','交通',1000), P(D(4,11),'Netflix','訂閱',390),
+    P(D(4,14),'威秀影城','娛樂',320,'週末電影'), P(D(4,16),'Spotify','訂閱',149), P(D(4,21),'屈臣氏','日用品',485),
+    P(D(4,25),'Switch 遊戲','娛樂',1490),
+    P(D(5,1),'孝親費','孝親',10000), P(D(5,6),'悠遊卡加值','交通',1500), P(D(5,9),'路易莎咖啡','用餐',180),
+    P(D(5,10),'母親節禮物','購物',2680), P(D(5,11),'Netflix','訂閱',390), P(D(5,16),'Spotify','訂閱',149),
+    P(D(5,20),'皮膚科診所','醫療',200), P(D(5,27),'高鐵票','交通',700,'回台中')
+  ];
+  document.getElementById('card-shared').classList.add('has-file');
+  document.getElementById('name-shared').textContent = '範例-共同帳單.csv';
+  document.getElementById('status-shared').innerHTML = `已載入 ${sharedRaw.length} 筆消費<span class="muted">&nbsp;· 範例資料</span>`;
+  document.getElementById('card-personal').classList.add('has-file');
+  document.getElementById('name-personal').textContent = '範例-個人帳單.csv';
+  document.getElementById('status-personal').innerHTML = `已載入 ${personalRaw.length} 筆（${personName}）<span class="muted">&nbsp;· 範例資料</span>`;
+  document.getElementById('cat-tab-personal').textContent = personName;
+  checkReady();
+  analyze();
+}
+
+// ── Scroll reveal ──────────────────────────────────────
+// The base CSS state is VISIBLE. We only opt elements into the hidden .pre
+// state after a real animation frame has fired (frames can be permanently
+// throttled in embedded iframes — the page must never depend on them).
+// IntersectionObserver animates elements in on scroll; a periodic sweep
+// force-reveals (instantly, no transition) anything stuck on screen.
+function setupReveals() {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!('IntersectionObserver' in window) || reduced || document.body.classList.contains('no-motion')) return;
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal:not(.in)').forEach(el => {
+    el.classList.add('pre');
+    io.observe(el);
+  });
+  // Sweep: anything visible on screen but never revealed gets shown instantly.
+  // Covers dashboard sections unhidden by analyze() if IO misses them, and any
+  // environment where IO callbacks stall.
+  setInterval(() => {
+    document.querySelectorAll('.reveal.pre:not(.in)').forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (r.width && r.top < window.innerHeight && r.bottom > 0) el.classList.add('in', 'instant');
+    });
+  }, 1200);
+}
+requestAnimationFrame(setupReveals);
+
+// ── Hero blob push + jelly interaction ─────────────────
+// Shapes in the banner are repelled by the cursor (closer = stronger) and
+// spring back with a squash-and-stretch wobble. Purely decorative: shapes
+// stay pointer-events:none, and the whole thing respects the motion toggle.
+(function () {
+  const masthead = document.querySelector('.masthead');
+  const shapeEls = document.querySelectorAll('.deco-shape');
+  if (!masthead || !shapeEls.length) return;
+  const reducedMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const motionOff = () => reducedMQ.matches || document.body.classList.contains('no-motion');
+
+  const shapes = [...shapeEls].map(el => ({
+    el, f: parseFloat(el.dataset.push) || 1,
+    x: 0, y: 0, vx: 0, vy: 0, tx: 0, ty: 0
+  }));
+  let mouse = null, rafId = null;
+  const RADIUS = 290, MAX_PUSH = 54;
+  const SPRING = 0.09, DAMP = 0.86;
+
+  function setTargets() {
+    shapes.forEach(s => {
+      if (!mouse) { s.tx = 0; s.ty = 0; return; }
+      const r = s.el.getBoundingClientRect();
+      const cx = r.left + r.width / 2 - s.x;   // rest-position center
+      const cy = r.top + r.height / 2 - s.y;
+      const dx = cx - mouse.x, dy = cy - mouse.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const t = Math.max(0, 1 - dist / RADIUS);
+      const push = t * t * MAX_PUSH * s.f;
+      s.tx = dx / dist * push;
+      s.ty = dy / dist * push;
+    });
+  }
+
+  function loop() {
+    if (motionOff()) {
+      shapes.forEach(s => { s.x = s.y = s.vx = s.vy = s.tx = s.ty = 0; s.el.style.transform = ''; });
+      rafId = null; return;
+    }
+    setTargets();
+    let active = mouse !== null;
+    shapes.forEach(s => {
+      s.vx = (s.vx + (s.tx - s.x) * SPRING) * DAMP;
+      s.vy = (s.vy + (s.ty - s.y) * SPRING) * DAMP;
+      s.x += s.vx; s.y += s.vy;
+      const speed = Math.hypot(s.vx, s.vy);
+      if (speed > 0.02 || Math.abs(s.x) + Math.abs(s.y) > 0.05) active = true;
+      if (!active && !mouse) { s.x = s.y = 0; s.el.style.transform = ''; return; }
+      // jelly: stretch along motion direction, squash across it
+      const stretch = Math.min(speed * 0.05, 0.22);
+      const ang = Math.atan2(s.vy, s.vx);
+      s.el.style.transform =
+        `translate(${s.x.toFixed(2)}px, ${s.y.toFixed(2)}px) ` +
+        `rotate(${ang.toFixed(3)}rad) scale(${(1 + stretch).toFixed(3)}, ${(1 - stretch * 0.75).toFixed(3)}) rotate(${(-ang).toFixed(3)}rad)`;
+    });
+    rafId = active ? requestAnimationFrame(loop) : null;
+  }
+  function kick() { if (rafId === null) rafId = requestAnimationFrame(loop); }
+
+  masthead.addEventListener('mousemove', e => {
+    if (motionOff()) return;
+    mouse = { x: e.clientX, y: e.clientY };
+    kick();
+  });
+  masthead.addEventListener('mouseleave', () => { mouse = null; kick(); });
+})();
+
+// ── Init ───────────────────────────────────────────────
+setupFileInput('file-shared',   'card-shared',   'name-shared',   'status-shared',   'shared');
+setupFileInput('file-personal', 'card-personal', 'name-personal', 'status-personal', 'personal');
+
+</script>
+
+
+
+</body>
+</html>
