@@ -513,6 +513,31 @@ body.no-motion .meal-modal { animation: none; }
       <div class="sum-card reveal" style="--rev:3"><div class="label">平均每日消費</div><div class="amount" id="sum-avg">-</div><div class="meta" id="meta-avg"></div></div>
     </div>
 
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="chart-card reveal"><h3 id="personal-chart-title">個人消費分類</h3><div class="chart-wrap"><canvas id="chart-personal"></canvas></div></div>
+      <div class="chart-card reveal" style="--rev:1"><h3>共同消費分類</h3><div class="chart-wrap"><canvas id="chart-shared"></canvas></div></div>
+    </div>
+
+    <div class="sec-head reveal"><span class="sec-en">ANALYSIS</span><span class="sec-zh">消費分析</span></div>
+
+    <!-- Category analysis -->
+    <div class="cat-section reveal">
+      <h3>消費類別分析</h3>
+      <div class="cat-tabs">
+        <button class="cat-tab active" onclick="switchCatTab('all', this)">全部</button>
+        <button class="cat-tab" onclick="switchCatTab('personal', this)" id="cat-tab-personal">個人</button>
+        <button class="cat-tab" onclick="switchCatTab('shared', this)">共同</button>
+      </div>
+      <div class="cat-table-wrap">
+        <table class="cat-table">
+          <thead><tr><th>類別</th><th>筆數</th><th>金額 (TWD)</th><th>佔比</th><th style="min-width:160px"></th></tr></thead>
+          <tbody id="cat-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+
     <!-- Dining analysis entry -->
     <button class="dining-entry reveal" id="dining-entry" onclick="openMealModal()">
       <span class="de-icon" aria-hidden="true">
@@ -530,30 +555,6 @@ body.no-motion .meal-modal { animation: none; }
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15"></path><path d="M13 6l6 6-6 6"></path></svg>
       </span>
     </button>
-
-    <!-- Charts -->
-    <div class="charts-row">
-      <div class="chart-card reveal"><h3 id="personal-chart-title">個人消費分類</h3><div class="chart-wrap"><canvas id="chart-personal"></canvas></div></div>
-      <div class="chart-card reveal" style="--rev:1"><h3>共同消費分類</h3><div class="chart-wrap"><canvas id="chart-shared"></canvas></div></div>
-    </div>
-
-    <div class="sec-head reveal"><span class="sec-en">ANALYSIS</span><span class="sec-zh">類別分析</span></div>
-
-    <!-- Category analysis -->
-    <div class="cat-section reveal">
-      <h3>類別消費分析</h3>
-      <div class="cat-tabs">
-        <button class="cat-tab active" onclick="switchCatTab('all', this)">全部</button>
-        <button class="cat-tab" onclick="switchCatTab('personal', this)" id="cat-tab-personal">個人</button>
-        <button class="cat-tab" onclick="switchCatTab('shared', this)">共同</button>
-      </div>
-      <div class="cat-table-wrap">
-        <table class="cat-table">
-          <thead><tr><th>類別</th><th>筆數</th><th>金額 (TWD)</th><th>佔比</th><th style="min-width:160px"></th></tr></thead>
-          <tbody id="cat-tbody"></tbody>
-        </table>
-      </div>
-    </div>
 
     <div class="sec-head reveal"><span class="sec-en">DETAIL</span><span class="sec-zh">消費明細</span></div>
 
