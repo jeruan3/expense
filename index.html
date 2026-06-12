@@ -65,6 +65,13 @@ button { font-family: var(--font-body); }
 }
 .hero-deco svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .deco-shape { transform-box: fill-box; transform-origin: center; will-change: transform; }
+.deco-float { transform-box: fill-box; transform-origin: center; will-change: transform; animation: decoFloat var(--fd, 8s) ease-in-out var(--fdel, 0s) infinite alternate; }
+@keyframes decoFloat {
+  from { transform: translate(0, 0) rotate(0deg); }
+  to { transform: translate(var(--fx, 3px), var(--fy, -5px)) rotate(var(--fr, 1deg)); }
+}
+body.no-motion .deco-float { animation: none; }
+@media (prefers-reduced-motion: reduce) { .deco-float { animation: none !important; } }
 .topbar {
   max-width: 1180px; margin: 0 auto; padding: 22px 28px 0;
   display: flex; align-items: center; justify-content: space-between;
@@ -431,10 +438,10 @@ body.no-motion .meal-modal { animation: none; }
 <div class="masthead">
   <div class="hero-deco" aria-hidden="true">
     <svg viewBox="0 0 680 380" preserveAspectRatio="xMaxYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <path class="deco-shape" data-push="0.3" fill="#E2E4E8" d="M740 -60 L740 250 C650 312 566 322 504 282 C452 248 444 178 402 146 C352 108 334 28 376 -60 Z"></path>
-      <path class="deco-shape" data-push="0.7" fill="#F6E8BC" d="M452 232 C506 226 552 262 556 312 C560 364 518 404 464 402 C408 400 366 362 368 312 C370 266 402 238 452 232 Z"></path>
-      <circle class="deco-shape" data-push="1.1" cx="318" cy="74" r="20" fill="#D9DCE0"></circle>
-      <circle class="deco-shape" data-push="1.4" cx="348" cy="180" r="11" fill="#F2D684"></circle>
+      <g class="deco-float" style="--fd:11s;--fx:8px;--fy:-12px;--fr:1deg"><path class="deco-shape" data-push="0.3" fill="#E2E4E8" d="M740 -60 L740 250 C650 312 566 322 504 282 C452 248 444 178 402 146 C352 108 334 28 376 -60 Z"></path></g>
+      <g class="deco-float" style="--fd:7.5s;--fdel:-2.5s;--fx:-10px;--fy:-16px;--fr:-2.5deg"><path class="deco-shape" data-push="0.7" fill="#F6E8BC" d="M452 232 C506 226 552 262 556 312 C560 364 518 404 464 402 C408 400 366 362 368 312 C370 266 402 238 452 232 Z"></path></g>
+      <g class="deco-float" style="--fd:6s;--fdel:-1s;--fx:6px;--fy:-18px;--fr:0deg"><circle class="deco-shape" data-push="1.1" cx="318" cy="74" r="20" fill="#D9DCE0"></circle></g>
+      <g class="deco-float" style="--fd:5s;--fdel:-3.5s;--fx:-8px;--fy:14px;--fr:0deg"><circle class="deco-shape" data-push="1.4" cx="348" cy="180" r="11" fill="#F2D684"></circle></g>
     </svg>
   </div>
   <header class="topbar">
