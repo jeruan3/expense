@@ -282,7 +282,8 @@ th.filterable:hover .filter-icon, th.filter-active .filter-icon { opacity: .8; }
 .badge-personal { background: var(--line-soft); color: var(--ink-2); }
 .cat-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); }
 .amount-cell { font-weight: 700; font-family: var(--font-body); font-variant-numeric: tabular-nums; font-size: 13px; }
-.row-count { font-size: 12px; color: var(--ink-3); margin-top: 12px; text-align: right; letter-spacing: .05em; }
+.detail-summary { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 14px; font-size: 12px; color: var(--ink-3); letter-spacing: .05em; }
+.detail-summary b { font-weight: 600; color: var(--ink-2); }
 
 /* ── Popover ── */
 .col-popover {
@@ -397,6 +398,16 @@ body.no-motion .meal-modal { animation: none; }
 .ratio-legend { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); margin-top: 6px; }
 .meal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .meal-box { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 16px; }
+.meal-box-click { cursor: pointer; transition: border-color .15s var(--ease), background .15s var(--ease), transform .15s var(--ease); }
+.meal-box-click:hover { border-color: var(--yellow); background: var(--yellow-tint); transform: translateY(-2px); }
+#meal-list-overlay { z-index: 1100; }
+.ml-modal { max-width: 560px; }
+.ml-summary { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 12px; color: var(--ink-2); margin-bottom: 14px; }
+.ml-summary b { font-family: var(--font-en); font-size: 14px; color: var(--ink); }
+.ml-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ml-src { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 700; }
+.ml-src.byname { background: var(--badge-shared-bg); color: var(--badge-shared-fg); }
+.ml-src.byguess { background: var(--line-soft); color: var(--ink-3); }
 .mb-name { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--ink-2); display: flex; justify-content: space-between; }
 .mb-avg { font-family: var(--font-en); font-size: 21px; font-weight: 800; margin-top: 6px; }
 .mb-avg.over { color: #D0342C; }
@@ -592,12 +603,13 @@ body.no-motion .meal-modal { animation: none; }
         <h3>消費明細</h3>
         <button class="clear-filters-btn" id="clear-filters-btn" onclick="resetDetailFilters()">重設篩選</button>
       </div>
+      <div class="detail-summary" id="detail-summary"></div>
       <div class="detail-scroll">
       <table id="detail-table">
         <thead>
           <tr>
             <th class="sortable" onclick="sortBy('date')">日期 <span class="sort-icon" id="sort-date">↕</span></th>
-            <th>名稱</th>
+            <th class="filterable" id="th-name" onclick="toggleColFilter('name', this)">名稱 <span class="filter-icon">▾</span><span class="th-dot"></span></th>
             <th class="filterable" id="th-cat" onclick="toggleColFilter('cat', this)">類別 <span class="filter-icon">▾</span><span class="th-dot"></span></th>
             <th class="filterable" id="th-type" onclick="toggleColFilter('type', this)">帳單 <span class="filter-icon">▾</span><span class="th-dot"></span></th>
             <th class="sortable" onclick="sortBy('amount')" style="text-align:right">金額 <span class="sort-icon" id="sort-amount">↕</span></th>
@@ -607,7 +619,6 @@ body.no-motion .meal-modal { animation: none; }
         <tbody id="detail-tbody"></tbody>
       </table>
       </div>
-      <div class="row-count" id="row-count"></div>
       <!-- Column filter popover lives here for reliable absolute positioning -->
       <div class="col-popover" id="col-popover"></div>
     </div>
@@ -637,6 +648,16 @@ body.no-motion .meal-modal { animation: none; }
   </div>
 </div>
 
+<div class="meal-overlay" id="meal-list-overlay">
+  <div class="meal-modal ml-modal" role="dialog" aria-modal="true" aria-label="餐別清單">
+    <div class="mm-head">
+      <div class="mm-title"><span class="mm-en">LIST</span><span class="mm-zh" id="ml-title-zh">餐別清單</span></div>
+      <button class="mm-close" onclick="closeMealList()" aria-label="關閉">✕</button>
+    </div>
+    <div class="mm-body" id="ml-body"></div>
+  </div>
+</div>
+
 <script>
 // ── 消費分析 app logic (functionality identical to original; visual hooks only) ──
 
@@ -663,7 +684,7 @@ let chartPersonal = null, chartShared = null;
 let availableCats = [];
 
 // Detail filters (JS state, not form elements)
-let detailFilters = { cats: new Set(), type: '', memo: '' };
+let detailFilters = { cats: new Set(), type: '', name: '', memo: '' };
 
 // Popover state
 let activePopCol = null;
@@ -916,6 +937,13 @@ function buildPopoverHTML(col) {
     const pills = opts.map(([v, label]) => `<button class="pop-type-pill${detailFilters.type === v ? ' active' : ''}" onclick="setTypeFilter('${v}')">${label}</button>`).join('');
     return `<div class="pop-title">帳單篩選</div><div class="pop-type-pills">${pills}</div>`;
   }
+  if (col === 'name') {
+    return `<div class="pop-title">名稱搜尋</div>
+      <div class="pop-memo-wrap">
+        <input class="pop-input" id="name-pop-input" placeholder="輸入關鍵字…" value="${detailFilters.name}" oninput="setNameFilter(this.value)">
+      </div>
+      <div class="pop-actions"><button class="pop-btn" onclick="setNameFilter('');document.getElementById('name-pop-input').value=''">清除</button><button class="pop-btn primary" onclick="closePopover()">完成</button></div>`;
+  }
   if (col === 'memo') {
     return `<div class="pop-title">備忘錄搜尋</div>
       <div class="pop-memo-wrap">
@@ -942,6 +970,10 @@ function setTypeFilter(val) {
   document.querySelectorAll('.pop-type-pill').forEach(b => b.classList.toggle('active', b.textContent.trim() === (val === '' ? '全部' : val === 'personal' ? (personName || '個人') : '共同')));
   applyDetailFilters();
 }
+function setNameFilter(val) {
+  detailFilters.name = val;
+  applyDetailFilters();
+}
 function setMemoFilter(val) {
   detailFilters.memo = val;
   applyDetailFilters();
@@ -951,8 +983,9 @@ function applyDetailFilters() {
   filteredRows = baseRows.filter(r => {
     const catOk  = detailFilters.cats.size === 0 || detailFilters.cats.has(r.cat);
     const typeOk = !detailFilters.type || r.type === detailFilters.type;
-    const memoOk = !detailFilters.memo || r.memo.toLowerCase().includes(detailFilters.memo.toLowerCase()) || r.name.toLowerCase().includes(detailFilters.memo.toLowerCase());
-    return catOk && typeOk && memoOk;
+    const nameOk = !detailFilters.name || (r.name || '').toLowerCase().includes(detailFilters.name.toLowerCase());
+    const memoOk = !detailFilters.memo || (r.memo || '').toLowerCase().includes(detailFilters.memo.toLowerCase());
+    return catOk && typeOk && nameOk && memoOk;
   });
   applySort();
   renderDetail(filteredRows);
@@ -960,7 +993,7 @@ function applyDetailFilters() {
 }
 
 function resetDetailFilters(render = true) {
-  detailFilters = { cats: new Set(), type: '', memo: '' };
+  detailFilters = { cats: new Set(), type: '', name: '', memo: '' };
   closePopover();
   updateHeaderIndicators();
   if (render) applyDetailFilters();
@@ -969,11 +1002,13 @@ function resetDetailFilters(render = true) {
 function updateHeaderIndicators() {
   const hasCat  = detailFilters.cats.size > 0;
   const hasType = !!detailFilters.type;
+  const hasName = !!detailFilters.name;
   const hasMemo = !!detailFilters.memo;
   document.getElementById('th-cat').classList.toggle('filter-active', hasCat);
   document.getElementById('th-type').classList.toggle('filter-active', hasType);
+  document.getElementById('th-name').classList.toggle('filter-active', hasName);
   document.getElementById('th-memo').classList.toggle('filter-active', hasMemo);
-  const hasAny = hasCat || hasType || hasMemo;
+  const hasAny = hasCat || hasType || hasName || hasMemo;
   document.getElementById('clear-filters-btn').classList.toggle('visible', hasAny);
 }
 
@@ -996,9 +1031,10 @@ function applySort() {
 // ── Render detail ──────────────────────────────────────
 function renderDetail(rows) {
   const tbody = document.getElementById('detail-tbody');
+  const summary = document.getElementById('detail-summary');
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="cell-empty">沒有符合條件的資料</td></tr>';
-    document.getElementById('row-count').textContent = ''; return;
+    summary.innerHTML = '<span>顯示 <b>0</b> 筆</span><span>合計 <b>' + fmt(0) + '</b></span>'; return;
   }
   const label = personName || '個人';
   tbody.innerHTML = rows.map(r => {
@@ -1014,7 +1050,8 @@ function renderDetail(rows) {
       <td class="cell-memo">${r.memo}</td>
     </tr>`;
   }).join('');
-  document.getElementById('row-count').textContent = `顯示 ${rows.length} 筆`;
+  const total = rows.reduce((s, r) => s + r.amount, 0);
+  summary.innerHTML = `<span>顯示 <b>${rows.length}</b> 筆</span><span>合計 <b>${fmt(total)}</b></span>`;
 }
 
 // ── Close popover on outside click ────────────────────
@@ -1033,26 +1070,24 @@ function loadDemo() {
   const P = (d, n, c, a, m = '') => ({ '日期': d, '名稱': n, '類別': c, '金額': String(a), '備忘錄': m });
   const D = (m, d) => `2026年${m}月${d}日`;
   sharedRaw = [
-    S(D(3,1),'房貸','居住',35000,17500), S(D(3,5),'台電電費','帳單',1860,930), S(D(3,8),'自來水費','帳單',420,210),
-    S(D(3,10),'中華電信網路','帳單',899,450), S(D(3,12),'全聯採買','日用品',2380,1190), S(D(3,15),'foodpanda 晚餐','用餐',520,260),
-    S(D(3,19),'鼎泰豐','用餐',1880,940,'媽媽生日'), S(D(3,22),'家樂福採買','日用品',3120,1560), S(D(3,28),'好市多','日用品',4280,2140,'囤衛生紙'),
-    S(D(4,1),'房貸','居住',35000,17500), S(D(4,6),'台電電費','帳單',1620,810), S(D(4,9),'瓦斯費','帳單',680,340),
-    S(D(4,10),'中華電信網路','帳單',899,450), S(D(4,13),'全聯採買','日用品',2150,1075), S(D(4,17),'藏壽司','用餐',980,490),
-    S(D(4,20),'foodpanda 晚餐','用餐',612,306), S(D(4,24),'IKEA 收納櫃','購物',2990,1495,'客廳整理'), S(D(4,27),'好市多','日用品',3650,1825),
-    S(D(5,1),'房貸','居住',35000,17500), S(D(5,5),'台電電費','帳單',2240,1120,'開冷氣了'), S(D(5,8),'自來水費','帳單',438,219),
-    S(D(5,10),'中華電信網路','帳單',899,450), S(D(5,14),'全聯採買','日用品',2460,1230), S(D(5,18),'乾杯燒肉','用餐',2360,1180,'慶祝加薪'),
-    S(D(5,23),'UberEats 晚餐','用餐',489,245), S(D(5,29),'家樂福採買','日用品',2880,1440)
+    S(D(3,1),'房貸','居住',35000,17500), S(D(3,5),'台電電費','帳單',1860,930), S(D(3,10),'中華電信網路','帳單',899,450),
+    S(D(3,12),'全聯食材採買','雜貨',2380,1190), S(D(3,15),'foodpanda 晚餐','用餐',520,260),
+    S(D(3,19),'鼎泰豐','用餐',1880,940,'媽媽生日'), S(D(3,25),'好市多','雜貨',4280,2140,'囤食材'),
+    S(D(4,1),'房貸','居住',35000,17500), S(D(4,6),'台電電費','帳單',1620,810), S(D(4,10),'中華電信網路','帳單',899,450),
+    S(D(4,13),'全聯食材採買','雜貨',2150,1075), S(D(4,20),'foodpanda 晚餐','用餐',612,306), S(D(4,24),'IKEA 收納櫃','購物',2990,1495,'客廳整理'),
+    S(D(5,1),'房貸','居住',35000,17500), S(D(5,5),'台電電費','帳單',2240,1120,'開冷氣了'), S(D(5,10),'中華電信網路','帳單',899,450),
+    S(D(5,14),'家樂福採買','雜貨',2880,1440), S(D(5,18),'乾杯燒肉','用餐',2360,1180,'慶祝加薪'), S(D(5,23),'UberEats 晚餐','用餐',489,245)
   ];
   personalRaw = [
-    P(D(3,1),'孝親費','孝親',10000), P(D(3,4),'悠遊卡加值','交通',1000), P(D(3,7),'路易莎咖啡','用餐',145),
-    P(D(3,11),'Netflix','訂閱',390), P(D(3,16),'Spotify','訂閱',149), P(D(3,18),'Uniqlo','購物',1280,'春裝'),
-    P(D(3,24),'牙醫洗牙','醫療',150), P(D(3,26),'誠品書店','購物',720),
-    P(D(4,1),'孝親費','孝親',10000), P(D(4,5),'悠遊卡加值','交通',1000), P(D(4,11),'Netflix','訂閱',390),
-    P(D(4,14),'威秀影城','娛樂',320,'週末電影'), P(D(4,16),'Spotify','訂閱',149), P(D(4,21),'屈臣氏','日用品',485),
-    P(D(4,25),'Switch 遊戲','娛樂',1490),
-    P(D(5,1),'孝親費','孝親',10000), P(D(5,6),'悠遊卡加值','交通',1500), P(D(5,9),'路易莎咖啡','用餐',180),
-    P(D(5,10),'母親節禮物','購物',2680), P(D(5,11),'Netflix','訂閱',390), P(D(5,16),'Spotify','訂閱',149),
-    P(D(5,20),'皮膚科診所','醫療',200), P(D(5,27),'高鐵票','交通',700,'回台中')
+    P(D(3,1),'孝親費','孝親',10000), P(D(3,3),'美而美早餐','用餐',65), P(D(3,4),'悠遊卡加值','交通',1000),
+    P(D(3,7),'路易莎咖啡','用餐',145), P(D(3,9),'池上便當 午餐','用餐',95), P(D(3,11),'Netflix','訂閱',390),
+    P(D(3,14),'起士蛋糕','用餐',120,'嘴饞'), P(D(3,18),'拉麵 晚餐','用餐',260), P(D(3,22),'精釀啤酒吧','用餐',380,'朋友聚會'), P(D(3,26),'誠品書店','購物',720),
+    P(D(4,1),'孝親費','孝親',10000), P(D(4,3),'麥當勞早餐','用餐',89), P(D(4,5),'悠遊卡加值','交通',1000),
+    P(D(4,8),'自助餐 午餐','用餐',130), P(D(4,12),'50嵐','用餐',55), P(D(4,14),'威秀影城','娛樂',320,'週末電影'),
+    P(D(4,16),'Netflix','訂閱',390), P(D(4,21),'豆花','用餐',60), P(D(4,25),'foodpanda 晚餐','用餐',180),
+    P(D(5,1),'孝親費','孝親',10000), P(D(5,4),'燒臘便當 午餐','用餐',110), P(D(5,6),'悠遊卡加值','交通',1500),
+    P(D(5,9),'星巴克','用餐',160), P(D(5,11),'Netflix','訂閱',390), P(D(5,15),'蛋糕甜點','用餐',150,'慶生'),
+    P(D(5,20),'皮膚科診所','醫療',200), P(D(5,24),'Craft Bar 小酌','用餐',420), P(D(5,27),'高鐵票','交通',700,'回台中')
   ];
   document.getElementById('card-shared').classList.add('has-file');
   document.getElementById('name-shared').textContent = '範例-共同帳單.csv';
@@ -1181,18 +1216,13 @@ function mealTypeOf(r) {
   if (n.includes('早餐')) return '早餐';
   if (n.includes('午餐')) return '午餐';
   if (n.includes('晚餐') || n.includes('宵夜')) return '晚餐';
-  const m = (r.time || '').match(/^(\d{1,2}):(\d{2})/);
-  if (!m) return '晚餐';
-  const mins = (+m[1]) * 60 + (+m[2]);
-  if (mins >= 300 && mins < 630) return '早餐';
-  if (mins >= 630 && mins < 960) return '午餐';
-  return '晚餐';
+  return null; // 只用名稱判斷；未標明餐別者不計入早午晚餐
 }
 
 const SNACK_EXCLUDE = ['濾紙', '咖啡機', '咖啡杯'];
 function snackGroupOf(r) {
-  if (r.cat === '點心') return SNACK_GROUPS[0];
-  if (r.cat === '飲料') return SNACK_GROUPS[1];
+  if (r.cat !== '用餐') return null; // 點心/手搖/小酌只在「用餐」項目中篩選
+  if (mealTypeOf(r)) return null;    // 名稱已確定為早/午/晚餐者，不再歸為點心/手搖/小酌
   const txt = ((r.name || '') + ' ' + (r.memo || '')).toLowerCase();
   if (SNACK_EXCLUDE.some(k => txt.includes(k))) return null;
   for (const g of SNACK_GROUPS) if (g.kw.some(k => txt.includes(k.toLowerCase()))) return g;
@@ -1216,7 +1246,7 @@ function mealStats() {
   const gatherings = eatOut.filter(r => r.amount > gatherThreshold);
   const daily = eatOut.filter(r => r.amount <= gatherThreshold);
   const meals = { '早餐': [], '午餐': [], '晚餐': [] };
-  daily.forEach(r => meals[mealTypeOf(r)].push(r));
+  daily.forEach(r => { const t = mealTypeOf(r); if (t) meals[t].push(r); });
   const snacks = SNACK_GROUPS.map(g => ({ name: g.name, rows: [] }));
   baseRows.forEach(r => {
     const g = snackGroupOf(r);
@@ -1289,15 +1319,15 @@ function renderMealModal() {
     const avg = n ? sumAmt(rows) / n : 0;
     const budget = MEAL_BUDGETS[mt], over = avg > budget;
     const pct = n ? Math.min(avg / budget * 100, 130) : 0;
-    html += `<div class="meal-box">
-      <div class="mb-name"><span>${mt}</span><span>${n} 次</span></div>
+    html += `<div class="meal-box${n ? ' meal-box-click' : ''}"${n ? ` onclick="openMealList('${mt}')"` : ''}>
+      <div class="mb-name"><span>${mt}${n ? ' ›' : ''}</span><span>${n} 次</span></div>
       <div class="mb-avg${over ? ' over' : ''}">${n ? fmt(avg) : '—'}</div>
       <div class="mb-meta">平均每餐 · 合計 ${fmt(sumAmt(rows))}</div>
       <div class="mb-track"><div class="mb-fill${over ? ' over' : ''}" style="width:${pct}%"></div></div>
       <div class="mb-budget"><span>預算 ${budget}</span>${n ? `<span class="${over ? 'bad' : 'ok'}">${over ? '超出 ' + Math.round(avg - budget) : '低於預算'}</span>` : '<span>—</span>'}</div>
     </div>`;
   });
-  html += `</div><div class="mm-note">已排除 ${gatherings.length} 筆特殊聚餐避免拉高平均。名稱含早／午／晚餐優先判定，其餘依記帳時間推斷（05:00–10:30 早、10:30–16:00 午、其餘歸晚）。</div></div>`;
+  html += `</div><div class="mm-note">已排除 ${gatherings.length} 筆特殊聚餐避免拉高平均。僅以名稱含「早餐／午餐／晚餐／宵夜」判定，未標明餐別者不計入。</div></div>`;
 
   const gT = sumAmt(gatherings);
   html += `<div class="mm-card"><h4>特殊聚餐</h4>
@@ -1321,8 +1351,8 @@ function renderMealModal() {
   html += `<div class="mm-card"><h4>點心 · 手搖 · 小酌</h4><div class="snack-grid">`;
   snacks.forEach(g => {
     const n = g.rows.length;
-    html += `<div class="meal-box">
-      <div class="mb-name"><span>${g.name}</span><span>${n} 次</span></div>
+    html += `<div class="meal-box${n ? ' meal-box-click' : ''}"${n ? ` onclick="openSnackList('${g.name}')"` : ''}>
+      <div class="mb-name"><span>${g.name}${n ? ' ›' : ''}</span><span>${n} 次</span></div>
       <div class="mb-avg">${n ? fmt(sumAmt(g.rows)) : '—'}</div>
       <div class="mb-meta">${n ? '平均單次 ' + fmt(sumAmt(g.rows) / n) : '本期沒有紀錄'}</div>
     </div>`;
@@ -1335,6 +1365,75 @@ function renderMealModal() {
 }
 
 function setGatherThreshold(v) { gatherThreshold = +v; renderMealModal(); }
+
+// ── 餐別清單（點早/午/晚餐格開啟）───────────────────────
+function openMealList(mt) {
+  const { meals } = mealStats();
+  const rows = (meals[mt] || []).slice().sort((a, b) => a.date - b.date);
+  const n = rows.length, total = sumAmt(rows), budget = MEAL_BUDGETS[mt];
+  const avg = n ? total / n : 0;
+  let html = `<div class="ml-summary">
+    <span><b>${n}</b> 次</span><span>合計 <b>${fmt(total)}</b></span><span>平均每餐 <b>${n ? fmt(avg) : '—'}</b></span><span>預算 ${budget}</span>
+  </div>`;
+  if (n) {
+    html += `<div class="ml-table-wrap"><table class="mm-table"><thead><tr>
+      <th>日期</th><th>時間</th><th>名稱</th><th>備忘錄</th><th style="text-align:right">金額</th>
+    </tr></thead><tbody>`;
+    rows.forEach(r => {
+      const over = r.amount > budget;
+      html += `<tr>
+        <td class="cell-date">${r.dateFmt}</td>
+        <td class="cell-date">${r.time || '—'}</td>
+        <td class="cell-name">${r.name}</td>
+        <td class="cell-memo">${r.memo}</td>
+        <td class="amount-cell" style="text-align:right${over ? ';color:#D0342C' : ''}">${fmt(r.amount)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>
+      <div class="mm-note">僅列出名稱含「${mt}」的項目（不含特殊聚餐）。金額標紅表示單筆高於該餐預算 ${budget}。</div>`;
+  } else {
+    html += `<div class="cell-empty" style="padding:14px 0">本期沒有${mt}紀錄</div>`;
+  }
+  document.getElementById('ml-title-zh').textContent = mt + ' 清單';
+  document.getElementById('ml-body').innerHTML = html;
+  document.getElementById('meal-list-overlay').classList.add('open');
+}
+function openSnackList(name) {
+  const { snacks } = mealStats();
+  const g = snacks.find(x => x.name === name);
+  const rows = (g ? g.rows : []).slice().sort((a, b) => a.date - b.date);
+  const n = rows.length, total = sumAmt(rows);
+  const avg = n ? total / n : 0;
+  let html = `<div class="ml-summary">
+    <span><b>${n}</b> 次</span><span>合計 <b>${fmt(total)}</b></span><span>平均單次 <b>${n ? fmt(avg) : '—'}</b></span>
+  </div>`;
+  if (n) {
+    html += `<div class="ml-table-wrap"><table class="mm-table"><thead><tr>
+      <th>日期</th><th>名稱</th><th>備忘錄</th><th style="text-align:right">金額</th>
+    </tr></thead><tbody>`;
+    rows.forEach(r => {
+      html += `<tr>
+        <td class="cell-date">${r.dateFmt}</td>
+        <td class="cell-name">${r.name}</td>
+        <td class="cell-memo">${r.memo}</td>
+        <td class="amount-cell" style="text-align:right">${fmt(r.amount)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>
+      <div class="mm-note">於「用餐」類別中，依名稱／備忘錄關鍵字歸類為「${name}」的項目。</div>`;
+  } else {
+    html += `<div class="cell-empty" style="padding:14px 0">本期沒有${name}紀錄</div>`;
+  }
+  document.getElementById('ml-title-zh').textContent = name + ' 清單';
+  document.getElementById('ml-body').innerHTML = html;
+  document.getElementById('meal-list-overlay').classList.add('open');
+}
+function closeMealList() {
+  document.getElementById('meal-list-overlay').classList.remove('open');
+}
+document.getElementById('meal-list-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeMealList();
+});
 function openMealModal() {
   renderMealModal();
   document.getElementById('meal-overlay').classList.add('open');
@@ -1347,7 +1446,11 @@ function closeMealModal() {
 document.getElementById('meal-overlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeMealModal();
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMealModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('meal-list-overlay').classList.contains('open')) closeMealList();
+  else closeMealModal();
+});
 
 // ── Random hero tagline ────────────────────────────────
 const TAGLINES = [
